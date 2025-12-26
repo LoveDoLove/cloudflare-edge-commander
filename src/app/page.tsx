@@ -36,7 +36,11 @@ import {
   Shield,
   Edit3,
   Check,
-  RotateCcw
+  RotateCcw,
+  Copy,
+  Hash,
+  Binary,
+  Info
 } from 'lucide-react';
 
 /**
@@ -44,7 +48,7 @@ import {
  */
 const ipv6ToArpa = (ipv6: string) => {
   try {
-    let [address] = ipv6.split('/');
+    let [address, prefix] = ipv6.includes('/') ? ipv6.split('/') : [ipv6, '128'];
     if (address.includes('::')) {
       const parts = address.split('::');
       const leftParts = parts[0].split(':').filter(x => x !== '');
@@ -56,6 +60,12 @@ const ipv6ToArpa = (ipv6: string) => {
       address = address.split(':').map(p => p.padStart(4, '0')).join(':');
     }
     const fullHex = address.replace(/:/g, '');
+    
+    if (prefix && parseInt(prefix) < 128) {
+        const nibbles = Math.floor(parseInt(prefix) / 4);
+        return fullHex.substring(0, nibbles).split('').reverse().join('.') + '.ip6.arpa';
+    }
+
     if (fullHex.length !== 32) return "Incomplete Address";
     return fullHex.split('').reverse().join('.') + '.ip6.arpa';
   } catch (e) {
@@ -107,6 +117,9 @@ export default function App() {
   const [zoneId, setZoneId] = useState('');
   const [ipv6Input, setIpv6Input] = useState('2001:db8::/32');
   
+  // Results state for Utils
+  const [labResults, setLabResults] = useState<{ip: string, arpa: string}[]>([]);
+  
   const [invLoading, setInvLoading] = useState(false);
   const [zoneLoading, setZoneLoading] = useState(false);
   const [certLoading, setCertLoading] = useState(false);
@@ -132,7 +145,6 @@ export default function App() {
   const [newDomainName, setNewDomainName] = useState('');
   const [newDns, setNewDns] = useState({ type: 'A', name: '', content: '', ttl: 1, proxied: false });
 
-  // Delete & Edit states
   const [recordToDelete, setRecordToDelete] = useState<any | null>(null);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<any | null>(null);
@@ -148,6 +160,16 @@ export default function App() {
   const addLog = (msg: string, type = 'info') => {
     setLogs(prev => [...prev, { msg, type, time: new Date().toLocaleTimeString() }]);
     if (type === 'error' || type === 'success') setIsConsoleOpen(true);
+  };
+
+  const copyText = (text: string) => {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    addLog(`Copied text to clipboard`, 'info');
   };
 
   const fetchCF = async (endpoint: string, method = 'GET', body?: any) => {
@@ -296,7 +318,6 @@ export default function App() {
     }
   };
 
-  // Inline Edit Handlers
   const handleStartEdit = (record: any) => {
     setEditingRecordId(record.id);
     setEditFormData({ ...record });
@@ -362,11 +383,20 @@ export default function App() {
     }
   };
 
-  const handleGenerate = () => {
-    const randomIp = generateRandomIPv6(ipv6Input);
-    const resultArpa = ipv6ToArpa(randomIp);
-    addLog(`IP: ${randomIp}`, 'success');
-    addLog(`Arpa: ${resultArpa}`, 'success');
+  const handleAnalyzeUtils = () => {
+    const arpa = ipv6ToArpa(ipv6Input);
+    setLabResults([{ ip: ipv6Input, arpa }]);
+    addLog(`Lab Analysis: Processed single entry ${ipv6Input}`, 'info');
+  };
+
+  const handleRandomizeUtils = () => {
+    const results = Array.from({ length: 4 }).map(() => {
+        const ip = generateRandomIPv6(ipv6Input);
+        const arpa = ipv6ToArpa(ip);
+        return { ip, arpa };
+    });
+    setLabResults(results);
+    addLog(`Lab Intelligence: Generated 4 unique random nodes from prefix.`, 'success');
   };
 
   const canBeProxied = (type: string) => ['A', 'AAAA', 'CNAME'].includes(type);
@@ -528,7 +558,6 @@ export default function App() {
                              {dnsLoading && <Loader2 className="size-5 animate-spin text-indigo-600" />}
                           </div>
 
-                          {/* Record Creation Form */}
                           <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-inner">
                              <select value={newDns.type} onChange={e => { const type = e.target.value; setNewDns({...newDns, type, proxied: canBeProxied(type) ? newDns.proxied : false}); }} className="select select-sm select-bordered bg-white font-black h-11 text-[11px] sm:col-span-1 rounded-xl focus:outline-none shadow-sm">{DNS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select>
                              <input type="text" placeholder="Name (@)" value={newDns.name} onChange={e => setNewDns({...newDns, name: e.target.value})} className="input input-sm bg-white border-slate-200 h-11 text-[11px] font-black sm:col-span-1 rounded-xl focus:ring-4 focus:ring-indigo-100 shadow-sm" />
@@ -544,7 +573,6 @@ export default function App() {
                              <button onClick={handleAddDnsRecord} disabled={dnsLoading} className="btn btn-md btn-primary h-11 font-black uppercase sm:col-span-1 rounded-xl border-none shadow-lg shadow-indigo-100 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50">Create</button>
                           </div>
 
-                          {/* DNS Table Container */}
                           <div className="max-h-80 overflow-auto border border-slate-200 rounded-2xl relative min-h-[180px] shadow-inner bg-white">
                              {dnsLoading ? (
                                <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 gap-3">
@@ -697,24 +725,101 @@ export default function App() {
               </div>
             )}
 
-            {/* View: Network Utils */}
+            {/* View: Network Utils - IMPROVED MULTI-RANDOMIZER */}
             {activeTab === 'utils' && (
-              <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-500">
-                <div className="bg-white border border-slate-200 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-12 text-center relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/50 blur-3xl rounded-full pointer-events-none" />
-                  <div className="size-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm"><Network className="size-8" /></div>
-                  <h3 className="text-2xl font-black tracking-tighter text-slate-900 uppercase">IPv6 Intelligence</h3>
-                  <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-2 max-w-sm mx-auto opacity-70">Automated Reverse Mapping Engine</p>
-                  
-                  <div className="bg-slate-50 p-10 rounded-[2rem] border border-slate-100 mt-10 space-y-8 shadow-inner">
-                    <div className="form-control text-left">
-                      <label className="label py-1 px-2"><span className="label-text text-[11px] font-black uppercase text-slate-600 tracking-wider">Origin IPv6 / Block</span></label>
-                      <input type="text" value={ipv6Input} onChange={(e) => setIpv6Input(e.target.value)} className="input bg-white border-slate-200 rounded-2xl text-base font-mono shadow-sm h-16 text-center focus:ring-4 focus:ring-blue-100 transition-all border-none" placeholder="2001:db8::/32" />
+              <div className="animate-in fade-in slide-in-from-bottom-6 duration-500 space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    
+                    {/* Left Panel: Analyzer Inputs */}
+                    <div className="lg:col-span-5 bg-white border border-slate-200 rounded-[2rem] shadow-xl shadow-slate-200/40 p-8 space-y-8">
+                        <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
+                            <div className="size-12 bg-blue-50 text-blue-600 rounded-[1.25rem] flex items-center justify-center shadow-inner"><Network className="size-6" /></div>
+                            <div>
+                                <h3 className="text-lg font-black text-slate-900 tracking-tight uppercase">Network Lab</h3>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">v6 Intelligence Engine</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="form-control">
+                                <label className="label px-1 pt-0"><span className="label-text text-[11px] font-black uppercase text-slate-600 tracking-wider">IPv6 Address / Block</span></label>
+                                <input 
+                                    type="text" 
+                                    value={ipv6Input} 
+                                    onChange={(e) => setIpv6Input(e.target.value)} 
+                                    className="input input-lg bg-slate-50 border-slate-200 w-full rounded-2xl text-base font-mono font-bold h-14 focus:ring-4 focus:ring-blue-100 focus:bg-white transition-all text-center" 
+                                    placeholder="2001:db8::/32" 
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                <button onClick={handleAnalyzeUtils} className="btn bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest h-14 border-none shadow-lg shadow-slate-200 group">
+                                    <RefreshCcw className="size-4 group-hover:rotate-180 transition-transform duration-500" /> Analyze
+                                </button>
+                                <button onClick={handleRandomizeUtils} className="btn bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest h-14 border-none shadow-lg shadow-indigo-100 group">
+                                    <Dices className="size-4 group-hover:scale-125 transition-transform" /> Randomize
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100/50 flex gap-4">
+                            <Info className="size-5 text-blue-500 shrink-0 mt-0.5" />
+                            <p className="text-[11px] text-blue-800/70 font-bold leading-relaxed">
+                                Enter a block to generate 4 random results without changing your input, or analyze a specific node for its PTR record.
+                            </p>
+                        </div>
                     </div>
-                    <button onClick={handleGenerate} className="btn btn-primary btn-lg w-full max-w-xs mx-auto rounded-[1.5rem] gap-5 font-black uppercase text-base h-16 border-none shadow-xl shadow-indigo-900/20 active:scale-95 transition-transform text-white hover:bg-indigo-700">
-                      <RefreshCcw className="size-7" /> Execute Computation
-                    </button>
-                  </div>
+
+                    {/* Right Panel: Multiple Results */}
+                    <div className="lg:col-span-7 space-y-6">
+                        <div className="bg-white border border-slate-200 rounded-[2rem] shadow-xl shadow-slate-200/40 overflow-hidden min-h-[300px] flex flex-col">
+                            <div className="px-8 py-5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Binary className="size-4 text-slate-400" />
+                                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Lab Output Registry</span>
+                                </div>
+                                <span className="text-[9px] font-black bg-slate-200 text-slate-600 px-2 py-0.5 rounded uppercase">
+                                    {labResults.length} Result{labResults.length !== 1 ? 's' : ''}
+                                </span>
+                            </div>
+                            
+                            <div className="flex-1 p-6 custom-scrollbar-light overflow-y-auto max-h-[500px]">
+                                {labResults.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {labResults.map((res, idx) => (
+                                            <div key={idx} className="bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-lg animate-in slide-in-from-right-4 duration-300" style={{ animationDelay: `${idx * 100}ms` }}>
+                                                {/* Header for result */}
+                                                <div className="px-4 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Entry #{idx + 1}</span>
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => copyText(res.ip)} className="flex items-center gap-1.5 text-[8px] font-black text-indigo-400 hover:text-indigo-300 transition-colors uppercase"><Hash className="size-2.5" /> IP</button>
+                                                        <button onClick={() => copyText(res.arpa)} className="flex items-center gap-1.5 text-[8px] font-black text-emerald-400 hover:text-emerald-300 transition-colors uppercase"><Globe className="size-2.5" /> ARPA</button>
+                                                    </div>
+                                                </div>
+                                                {/* Values */}
+                                                <div className="p-4 space-y-3">
+                                                    <div>
+                                                        <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Generated Node</p>
+                                                        <p className="text-white font-mono text-[13px] font-bold select-all truncate">{res.ip}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Reverse Mapping</p>
+                                                        <p className="text-indigo-300 font-mono text-[11px] select-all break-all leading-relaxed">{res.arpa}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center py-20 opacity-20 grayscale">
+                                        <Activity className="size-16 mb-4" />
+                                        <p className="text-[12px] font-black uppercase tracking-[0.3em]">System Idle</p>
+                                        <p className="text-[9px] font-bold uppercase mt-2">Awaiting Intelligence Processing</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </div>
               </div>
             )}
@@ -749,18 +854,8 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 w-full pt-4">
-                  <button 
-                    onClick={() => setRecordToDelete(null)}
-                    className="btn btn-ghost rounded-2xl font-black uppercase text-[11px] tracking-widest h-12 hover:bg-slate-100 text-slate-600 hover:text-slate-900 active:bg-slate-200 transition-colors border border-slate-200"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    onClick={handleDeleteDnsRecord}
-                    className="btn bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest h-12 border-none shadow-lg shadow-rose-200 transition-all active:scale-95"
-                  >
-                    Delete Record
-                  </button>
+                  <button onClick={() => setRecordToDelete(null)} className="btn btn-ghost rounded-2xl font-black uppercase text-[11px] tracking-widest h-12 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200">Cancel</button>
+                  <button onClick={handleDeleteDnsRecord} className="btn bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest h-12 border-none shadow-lg shadow-rose-200 transition-all active:scale-95">Delete Record</button>
                 </div>
               </div>
             </div>
