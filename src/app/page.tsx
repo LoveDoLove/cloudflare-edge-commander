@@ -32,8 +32,6 @@ import {
   LayoutDashboard,
   Network,
   CloudCog,
-  ChevronDown,
-  ChevronUp,
   X,
   Shield
 } from 'lucide-react';
@@ -108,7 +106,6 @@ export default function Home() {
   const [addDomainLoading, setAddDomainLoading] = useState(false);
   const [dnsLoading, setDnsLoading] = useState(false);
   
-  // Action Loading States
   const [caLoading, setCaLoading] = useState(false);
   const [sslLoading, setSslLoading] = useState(false);
   
@@ -327,9 +324,9 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen bg-[#F1F5F9] text-slate-900 font-sans overflow-hidden">
+    <div className="flex h-screen font-sans overflow-hidden bg-[#F1F5F9] text-slate-900">
       
-      {/* Sidebar Navigation */}
+      {/* Sidebar Navigation - Professional Dark Slate */}
       <aside className="w-64 bg-slate-900 flex flex-col shrink-0">
         <div className="p-6">
           <div className="flex items-center gap-3">
@@ -377,16 +374,12 @@ export default function Home() {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         
-        {/* Top Header Bar */}
+        {/* Top Header Bar - Clean Light */}
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
           <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">
             {activeTab === 'auth' ? 'Connectivity & Access' : activeTab === 'edge' ? 'Cloudflare Edge Ops' : 'IPv6 Utilities'}
           </h2>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-[10px] font-black text-slate-600 uppercase">System Ready</span>
-            </div>
+          <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsConsoleOpen(!isConsoleOpen)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase transition-all ${isConsoleOpen ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
@@ -396,11 +389,11 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Tab Content */}
+        {/* Workspace Content */}
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
           <div className="max-w-5xl mx-auto space-y-6">
             
-            {/* View 1: Auth & Accounts */}
+            {/* Tab: Connectivity */}
             {activeTab === 'auth' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-8 space-y-6">
@@ -440,8 +433,8 @@ export default function Home() {
                     ) : (
                       accounts.map(acc => (
                         <button key={acc.id} onClick={() => handleSelectAccount(acc.id, acc.name)} className={`w-full p-4 text-left flex items-center justify-between hover:bg-slate-50 transition-all ${selectedAccountId === acc.id ? 'bg-indigo-50/50 ring-1 ring-inset ring-indigo-100' : ''}`}>
-                          <div><p className="text-xs font-bold text-slate-800">{acc.name}</p><p className="text-[9px] text-slate-400 font-mono truncate max-w-[150px]">{acc.id}</p></div>
-                          {selectedAccountId === acc.id && <CheckCircle2 className="size-4 text-indigo-500" />}
+                          <div className="min-w-0"><p className="text-xs font-bold text-slate-800 truncate">{acc.name}</p><p className="text-[9px] text-slate-400 font-mono truncate max-w-[150px]">{acc.id}</p></div>
+                          {selectedAccountId === acc.id && <CheckCircle2 className="size-4 text-indigo-500 shrink-0" />}
                         </button>
                       ))
                     )}
@@ -450,24 +443,24 @@ export default function Home() {
               </div>
             )}
 
-            {/* View 2: Edge Manager (Zones & Records) */}
+            {/* Tab: Edge Manager */}
             {activeTab === 'edge' && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Zone Selection Column */}
-                  <div className="lg:col-span-1 bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col">
+                  {/* Zone List Card */}
+                  <div className="lg:col-span-1 bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col h-fit">
                     <div className="p-6 border-b border-slate-50">
                       <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider">Domains ({zones.length})</h3>
                     </div>
-                    <div className="flex-1 p-3 flex flex-col gap-2">
+                    <div className="p-3 flex flex-col gap-2">
                        {selectedAccountId && (
                           <div className="flex gap-2 mb-2 p-1">
                             <input type="text" placeholder="Add domain..." value={newDomainName} onChange={(e) => setNewDomainName(e.target.value)} className="input input-xs bg-slate-50 border-slate-200 flex-1 rounded-lg text-[10px] font-bold" />
                             <button onClick={handleAddDomain} disabled={addDomainLoading} className="btn btn-xs btn-primary rounded-lg">{addDomainLoading ? <Loader2 className="size-3 animate-spin" /> : <PlusCircle className="size-3" />}</button>
                           </div>
                        )}
-                       <div className="max-h-[400px] overflow-y-auto space-y-1">
-                          {!selectedAccountId ? <div className="p-8 text-center text-[10px] text-slate-400 italic">Select account in connectivity tab</div> : zones.map(z => (
+                       <div className="max-h-[400px] overflow-y-auto space-y-1 custom-scrollbar">
+                          {!selectedAccountId ? <div className="p-8 text-center text-[10px] text-slate-400 italic">Select account first</div> : zones.map(z => (
                             <button key={z.id} onClick={() => handleSelectZone(z.id, z.name)} className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between group transition-all ${zoneId === z.id ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-slate-50 text-slate-700'}`}>
                                 <span className="text-[11px] font-bold truncate max-w-[120px]">{z.name}</span>
                                 <ChevronRight className={`size-3 transition-transform ${zoneId === z.id ? 'translate-x-0' : 'translate-x-[-4px] opacity-0 group-hover:opacity-100'}`} />
@@ -477,11 +470,11 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Right Features Column */}
+                  {/* DNS & Security Column */}
                   <div className="lg:col-span-2 space-y-6">
                     {zoneId ? (
                       <>
-                        {/* 1. DNS Management Section */}
+                        {/* DNS Management Section */}
                         <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-6 space-y-4">
                           <div className="flex items-center justify-between">
                              <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2"><Globe className="size-3" /> DNS Records</h3>
@@ -496,12 +489,12 @@ export default function Home() {
                           <div className="max-h-48 overflow-y-auto border border-slate-100 rounded-2xl relative min-h-[120px]">
                              {dnsLoading ? (
                                <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex flex-col items-center justify-center z-10 gap-2"><span className="loading loading-spinner loading-md text-indigo-600"></span><p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] animate-pulse">Syncing DNS...</p></div>
-                             ) : dnsRecords.length === 0 ? ( <div className="p-12 text-center text-[10px] text-slate-400 italic">No records found</div> ) : (
+                             ) : (
                                <table className="table table-xs w-full">
                                   <thead><tr><th>TYPE</th><th>NAME</th><th>CONTENT</th><th className="text-right">DEL</th></tr></thead>
                                   <tbody>
                                     {dnsRecords.map(r => (
-                                      <tr key={r.id} className="hover:bg-slate-50"><td className="font-black text-indigo-600">{r.type}</td><td className="font-bold text-slate-700">{r.name}</td><td className="text-[9px] font-mono opacity-50 truncate max-w-[120px]">{r.content}</td><td className="text-right"><button onClick={() => handleDeleteDnsRecord(r.id, r.name)} className="text-rose-500 hover:scale-110 transition-transform"><Trash2 className="size-3" /></button></td></tr>
+                                      <tr key={r.id} className="hover:bg-slate-50 border-b border-slate-50 last:border-0"><td className="font-black text-indigo-600">{r.type}</td><td className="font-bold">{r.name}</td><td className="text-[9px] font-mono opacity-50 truncate max-w-[120px]">{r.content}</td><td className="text-right"><button onClick={() => handleDeleteDnsRecord(r.id, r.name)} className="text-rose-500 hover:scale-110 transition-transform"><Trash2 className="size-3" /></button></td></tr>
                                     ))}
                                   </tbody>
                                </table>
@@ -509,11 +502,11 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {/* 2. Separate Provisioning Blocks */}
+                        {/* Separate Provisioning Blocks - Static Dark Style for "Action" contrast */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                            {/* CA Provider Management */}
                            <div className="bg-slate-900 rounded-3xl p-6 shadow-xl space-y-4 relative overflow-hidden flex flex-col min-h-[220px]">
-                              <div className="flex items-center gap-3 relative z-10">
+                              <div className="flex items-center gap-3">
                                 <div className="size-9 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20"><Award className="size-4" /></div>
                                 <h3 className="font-bold text-white text-sm">CA Provider</h3>
                               </div>
@@ -536,7 +529,7 @@ export default function Home() {
 
                            {/* SSL Encryption Management */}
                            <div className="bg-slate-900 rounded-3xl p-6 shadow-xl space-y-4 relative overflow-hidden flex flex-col min-h-[220px]">
-                              <div className="flex items-center gap-3 relative z-10">
+                              <div className="flex items-center gap-3">
                                 <div className="size-9 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20"><Shield className="size-4" /></div>
                                 <h3 className="font-bold text-white text-sm">SSL Encryption</h3>
                               </div>
@@ -566,7 +559,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* View 3: Network Utility */}
+            {/* Tab: Network Utility */}
             {activeTab === 'utils' && (
               <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-10 space-y-8 text-center relative overflow-hidden">
@@ -580,7 +573,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Floating Console Drawer */}
+        {/* Floating Console Drawer - Always Dark */}
         <div className={`absolute bottom-0 left-0 right-0 bg-[#0F172A] border-t border-slate-800 transition-all duration-500 ease-in-out z-50 overflow-hidden shadow-[0_-20px_50px_-12px_rgba(0,0,0,0.5)] ${isConsoleOpen ? 'h-[300px]' : 'h-0'}`}>
           <div className="h-full flex flex-col"><div className="bg-slate-800/50 px-8 py-3 flex items-center justify-between border-b border-slate-700/50"><div className="flex items-center gap-3"><div className="flex gap-1.5"><div className="size-2.5 rounded-full bg-slate-600"></div><div className="size-2.5 rounded-full bg-slate-600"></div><div className="size-2.5 rounded-full bg-slate-600"></div></div><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2"><Terminal className="size-3.5" /> Output Monitor</span></div><button onClick={() => setIsConsoleOpen(false)} className="text-slate-500 hover:text-white"><X className="size-4" /></button></div><div className="flex-1 p-6 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-2 custom-scrollbar">{logs.map((log, i) => (<div key={i} className="flex gap-6 group border-b border-white/[0.03] pb-1.5"><span className="text-slate-600 shrink-0 tabular-nums">[{log.time}]</span><span className={`shrink-0 font-black ${log.type === 'success' ? 'text-emerald-500' : log.type === 'error' ? 'text-rose-500' : 'text-indigo-400'}`}>{log.type.toUpperCase()}</span><span className={log.type === 'success' ? 'text-emerald-50' : log.type === 'error' ? 'text-rose-50' : 'text-slate-300'}>{log.msg}</span></div>))}<div ref={logEndRef} /></div></div>
         </div>
