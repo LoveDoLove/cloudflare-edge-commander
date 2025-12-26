@@ -1,52 +1,181 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-	return (
-		<div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-			<main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-				<Image className="dark:invert" src="/next.svg" alt="Next.js logo" width={180} height={38} priority />
-				<ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-					<li className="mb-2 tracking-[-.01em]">
-						Get started by editing{" "}
-						<code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-							src/app/page.tsx
-						</code>
-						.
-					</li>
-					<li className="tracking-[-.01em]">Save and see your changes instantly.</li>
-				</ol>
+import React from 'react';
+import { 
+  LayoutDashboard, CloudCog, Network, Github, Terminal, 
+  BookOpen, Layers, Info, Lock, Scale 
+} from 'lucide-react';
 
-				<div className="flex gap-4 items-center flex-col sm:flex-row">
-					<a
-						className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-						href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						Read our docs
-					</a>
-				</div>
-			</main>
-			<footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-				<a
-					className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-					href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					<Image aria-hidden src="/file.svg" alt="File icon" width={16} height={16} />
-					Learn
-				</a>
-				<a
-					className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-					href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					<Image aria-hidden src="/globe.svg" alt="Globe icon" width={16} height={16} />
-					Go to nextjs.org →
-				</a>
-			</footer>
-		</div>
-	);
+import { useCloudflareManager } from '@/hooks/useCloudflareManager';
+import { ConnectivityView } from '@/components/views/ConnectivityView';
+import { EdgeManagerView } from '@/components/views/EdgeManagerView';
+import { NetworkLabView } from '@/components/views/NetworkLabView';
+import { DnsDocsView } from '@/components/views/DnsDocsView'; 
+import { AboutView } from '@/components/views/AboutViews';
+import { PrivacyView } from '@/components/views/PrivacyViews';
+import { TermsView } from '@/components/views/TermsViews';
+import { DeleteConfirmationModal, ConsoleDrawer } from '@/components/Overlays';
+
+const utils = {
+  ipv6ToArpa: (ipv6: string) => {
+    try {
+      let [address, prefix] = ipv6.includes('/') ? ipv6.split('/') : [ipv6, '128'];
+      if (address.includes('::')) {
+        const parts = address.split('::');
+        const leftParts = parts[0].split(':').filter(x => x !== '');
+        const rightParts = parts[1].split(':').filter(x => x !== '');
+        const missingCount = 8 - (leftParts.length + rightParts.length);
+        const expanded = [...leftParts, ...Array(missingCount).fill('0000'), ...rightParts];
+        address = expanded.map(p => p.padStart(4, '0')).join(':');
+      } else {
+        address = address.split(':').map(p => p.padStart(4, '0')).join(':');
+      }
+      const fullHex = address.replace(/:/g, '');
+      if (prefix && parseInt(prefix) < 128) {
+          const nibbles = Math.floor(parseInt(prefix) / 4);
+          return fullHex.substring(0, nibbles).split('').reverse().join('.') + '.ip6.arpa';
+      }
+      return fullHex.split('').reverse().join('.') + '.ip6.arpa';
+    } catch (e) { return "Invalid IPv6 Format"; }
+  },
+  generateRandomIPv6: (currentInput: string) => {
+    const hexChars = "0123456789abcdef";
+    const genPart = (len: number) => Array.from({length: len}, () => hexChars[Math.floor(Math.random() * 16)]).join('');
+    try {
+      const [addressPart, prefixPart] = currentInput.includes('/') ? currentInput.split('/') : [currentInput, '128'];
+      const prefixLength = parseInt(prefixPart) || 128;
+      let address = addressPart;
+      if (address.includes('::')) {
+        const parts = address.split('::');
+        const leftParts = parts[0].split(':').filter(x => x !== '');
+        const rightParts = parts[1].split(':').filter(x => x !== '');
+        const missingCount = 8 - (leftParts.length + rightParts.length);
+        const expanded = [...leftParts, ...Array(missingCount).fill('0000'), ...rightParts];
+        address = expanded.map(p => p.padStart(4, '0')).join(':');
+      } else { address = address.split(':').map(p => p.padStart(4, '0')).join(':'); }
+      const fullHex = address.replace(/:/g, '');
+      const fixedNibbles = Math.floor(prefixLength / 4);
+      const resultHex = fullHex.substring(0, fixedNibbles) + genPart(32 - fixedNibbles);
+      const blocks = [];
+      for (let i = 0; i < 32; i += 4) blocks.push(resultHex.substring(i, i + 4));
+      return blocks.join(':');
+    } catch (e) { return Array.from({length: 8}, () => genPart(4)).join(':'); }
+  }
+};
+
+export default function App() {
+  const state = useCloudflareManager();
+  const { t } = state;
+
+  return (
+    <div className="flex h-screen font-sans overflow-hidden bg-slate-50 text-slate-900">
+      
+      <aside className="w-60 bg-slate-900 flex flex-col shrink-0 relative z-20 shadow-2xl">
+        <div className="p-6">
+          <div className="flex items-center gap-3">
+            <div className="size-10 bg-linear-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-950/40 border border-orange-400/20">
+              <Layers className="size-5 text-white" />
+            </div>
+            <div className="flex flex-col">
+              <div className="text-white font-black tracking-widest text-[11px] uppercase leading-none">Edge</div>
+              <div className="text-orange-400 font-black tracking-widest text-[9px] uppercase leading-none mt-1">Commander</div>
+            </div>
+          </div>
+          <div className="mt-4 px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+            <p className="text-[7px] font-black text-orange-500 uppercase tracking-[0.2em] text-center">Cloudflare Edition</p>
+          </div>
+        </div>
+
+        <div className="px-4 py-2">
+           <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-2">{t.core_services}</p>
+           <nav className="space-y-1">
+            {[
+              { id: 'auth', label: t.nav_conn, icon: LayoutDashboard },
+              { id: 'edge', label: t.nav_edge, icon: CloudCog },
+              { id: 'utils', label: t.nav_lab, icon: Network },
+              { id: 'docs', label: t.nav_docs, icon: BookOpen }
+            ].map(tab => (
+              <button 
+                key={tab.id} onClick={() => state.setActiveTab(tab.id as any)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${state.activeTab === tab.id ? 'bg-orange-600 text-white shadow-xl shadow-orange-950/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white active:text-white'}`}
+              >
+                <tab.icon className="size-4" /> {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="px-4 py-6 mt-4">
+           <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-2">{t.legal_compliance}</p>
+           <nav className="space-y-1">
+            {[
+              { id: 'about', label: t.nav_about, icon: Info },
+              { id: 'privacy', label: t.nav_privacy, icon: Lock },
+              { id: 'terms', label: t.nav_terms, icon: Scale }
+            ].map(tab => (
+              <button 
+                key={tab.id} onClick={() => state.setActiveTab(tab.id as any)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${state.activeTab === tab.id ? 'bg-white/10 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                <tab.icon className="size-4" /> {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="p-4 mt-auto space-y-4 border-t border-slate-800">
+          <div className="flex bg-slate-800 rounded-xl p-1">
+            <button onClick={() => state.setLang('en')} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${state.lang === 'en' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500'}`}>EN</button>
+            <button onClick={() => state.setLang('zh')} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${state.lang === 'zh' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500'}`}>中文</button>
+          </div>
+        </div>
+      </aside>
+
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 shadow-sm">
+          <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
+            {state.activeTab === 'auth' && t.auth_title}
+            {state.activeTab === 'edge' && t.infra_title}
+            {state.activeTab === 'utils' && t.lab_title}
+            {state.activeTab === 'docs' && t.docs_title}
+            {state.activeTab === 'about' && t.about_title}
+            {state.activeTab === 'privacy' && t.privacy_title}
+            {state.activeTab === 'terms' && t.terms_title}
+          </h2>
+          <button 
+            onClick={() => state.setIsConsoleOpen(!state.isConsoleOpen)}
+            className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border text-[10px] font-black uppercase transition-all shadow-sm ${state.isConsoleOpen ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-900 active:bg-slate-50'}`}
+          >
+            <Terminal className="size-3.5" /> {state.isConsoleOpen ? t.monitor_close : t.monitor_open}
+          </button>
+        </header>
+
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar-light">
+          <div className="max-w-6xl mx-auto transition-all duration-500">
+            {state.activeTab === 'auth' && <ConnectivityView state={state} />}
+            {state.activeTab === 'edge' && <EdgeManagerView state={state} />}
+            {state.activeTab === 'utils' && <NetworkLabView state={state} utils={utils} />}
+            {state.activeTab === 'docs' && <DnsDocsView lang={state.lang} />}
+            {state.activeTab === 'about' && <AboutView lang={state.lang} />}
+            {state.activeTab === 'privacy' && <PrivacyView lang={state.lang} />}
+            {state.activeTab === 'terms' && <TermsView lang={state.lang} />}
+          </div>
+        </div>
+
+        {state.recordToDelete && <DeleteConfirmationModal state={state} record={state.recordToDelete} onCancel={() => state.setRecordToDelete(null)} onConfirm={state.handleDeleteDnsRecord} />}
+        <ConsoleDrawer state={state} isOpen={state.isConsoleOpen} onClose={() => state.setIsConsoleOpen(false)} logs={state.logs} logEndRef={state.logEndRef} />
+      </main>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0F172A; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 12px; }
+        .custom-scrollbar-light::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar-light::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar-light::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.1); border-radius: 10px; }
+        input::placeholder { font-weight: 800; color: #94A3B8; opacity: 0.4; text-transform: uppercase; letter-spacing: 0.05em; }
+        aside nav button { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+      `}</style>
+    </div>
+  );
 }
