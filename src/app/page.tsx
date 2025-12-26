@@ -3,10 +3,9 @@
 import React from 'react';
 import { 
   ShieldCheck, LayoutDashboard, CloudCog, Network, Github, Terminal, 
-  Lock, Scale, ChevronRight 
+  Lock, Scale, Languages 
 } from 'lucide-react';
 
-// Relative imports for modular structure
 import { useCloudflareManager } from '@/hooks/useCloudflareManager';
 import { ConnectivityView } from '@/components/views/ConnectivityView';
 import { EdgeManagerView } from '@/components/views/EdgeManagerView';
@@ -14,7 +13,6 @@ import { NetworkLabView } from '@/components/views/NetworkLabView';
 import { PrivacyView, TermsView } from '@/components/views/LegalViews';
 import { DeleteConfirmationModal, ConsoleDrawer } from '@/components/Overlays';
 
-// Global utility for complex tasks (like ARPA mapping)
 const utils = {
   ipv6ToArpa: (ipv6: string) => {
     try {
@@ -37,7 +35,6 @@ const utils = {
       return fullHex.split('').reverse().join('.') + '.ip6.arpa';
     } catch (e) { return "Invalid IPv6 Format"; }
   },
-
   generateRandomIPv6: (currentInput: string) => {
     const hexChars = "0123456789abcdef";
     const genPart = (len: number) => Array.from({length: len}, () => hexChars[Math.floor(Math.random() * 16)]).join('');
@@ -65,11 +62,11 @@ const utils = {
 
 export default function App() {
   const state = useCloudflareManager();
+  const { t } = state;
 
   return (
     <div className="flex h-screen font-sans overflow-hidden bg-slate-50 text-slate-900">
       
-      {/* Sidebar Layout */}
       <aside className="w-60 bg-slate-900 flex flex-col shrink-0 relative z-20 shadow-2xl">
         <div className="p-6">
           <div className="flex items-center gap-3">
@@ -81,12 +78,12 @@ export default function App() {
         </div>
 
         <div className="px-4 py-2">
-           <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-2">Core Services</p>
+           <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-2">{t.core_services}</p>
            <nav className="space-y-1">
             {[
-              { id: 'auth', label: 'Connection', icon: LayoutDashboard },
-              { id: 'edge', label: 'Edge Manager', icon: CloudCog },
-              { id: 'utils', label: 'Network Lab', icon: Network }
+              { id: 'auth', label: t.nav_conn, icon: LayoutDashboard },
+              { id: 'edge', label: t.nav_edge, icon: CloudCog },
+              { id: 'utils', label: t.nav_lab, icon: Network }
             ].map(tab => (
               <button 
                 key={tab.id} onClick={() => state.setActiveTab(tab.id as any)}
@@ -99,11 +96,11 @@ export default function App() {
         </div>
 
         <div className="px-4 py-6 mt-4">
-           <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-2">Legal & Compliance</p>
+           <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-2">{t.legal_compliance}</p>
            <nav className="space-y-1">
             {[
-              { id: 'privacy', label: 'Privacy Policy', icon: Lock },
-              { id: 'terms', label: 'Terms of Service', icon: Scale }
+              { id: 'privacy', label: t.nav_privacy, icon: Lock },
+              { id: 'terms', label: t.nav_terms, icon: Scale }
             ].map(tab => (
               <button 
                 key={tab.id} onClick={() => state.setActiveTab(tab.id as any)}
@@ -115,28 +112,31 @@ export default function App() {
           </nav>
         </div>
 
-        <div className="p-5 mt-auto border-t border-slate-800">
+        <div className="p-4 mt-auto space-y-4 border-t border-slate-800">
+          <div className="flex bg-slate-800 rounded-xl p-1">
+            <button onClick={() => state.setLang('en')} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${state.lang === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500'}`}>EN</button>
+            <button onClick={() => state.setLang('zh')} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${state.lang === 'zh' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500'}`}>中文</button>
+          </div>
           <a href="https://github.com/LoveDoLove" target="_blank" className="flex items-center gap-2 text-[10px] font-bold text-slate-500 hover:text-white transition-colors">
-            <Github className="size-3.5" /> Repository
+            <Github className="size-3.5" /> {t.repo}
           </a>
         </div>
       </aside>
 
-      {/* Main Viewport Container */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 shadow-sm">
           <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
-            {state.activeTab === 'auth' && 'Connectivity & Access'}
-            {state.activeTab === 'edge' && 'Infrastructure Management'}
-            {state.activeTab === 'utils' && 'Network Intelligence Laboratory'}
-            {state.activeTab === 'privacy' && 'Data Sovereignty'}
-            {state.activeTab === 'terms' && 'Service Agreement'}
+            {state.activeTab === 'auth' && t.auth_title}
+            {state.activeTab === 'edge' && t.infra_title}
+            {state.activeTab === 'utils' && t.lab_title}
+            {state.activeTab === 'privacy' && t.privacy_title}
+            {state.activeTab === 'terms' && t.terms_title}
           </h2>
           <button 
             onClick={() => state.setIsConsoleOpen(!state.isConsoleOpen)}
             className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border text-[10px] font-black uppercase transition-all shadow-sm ${state.isConsoleOpen ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-900 active:bg-slate-50'}`}
           >
-            <Terminal className="size-3.5" /> {state.isConsoleOpen ? 'Close Monitor' : 'Process Monitor'}
+            <Terminal className="size-3.5" /> {state.isConsoleOpen ? t.monitor_close : t.monitor_open}
           </button>
         </header>
 
@@ -145,14 +145,13 @@ export default function App() {
             {state.activeTab === 'auth' && <ConnectivityView state={state} />}
             {state.activeTab === 'edge' && <EdgeManagerView state={state} />}
             {state.activeTab === 'utils' && <NetworkLabView state={state} utils={utils} />}
-            {state.activeTab === 'privacy' && <PrivacyView />}
-            {state.activeTab === 'terms' && <TermsView />}
+            {state.activeTab === 'privacy' && <PrivacyView lang={state.lang} />}
+            {state.activeTab === 'terms' && <TermsView lang={state.lang} />}
           </div>
         </div>
 
-        {/* Global Overlays */}
-        {state.recordToDelete && <DeleteConfirmationModal record={state.recordToDelete} onCancel={() => state.setRecordToDelete(null)} onConfirm={state.handleDeleteDnsRecord} />}
-        <ConsoleDrawer isOpen={state.isConsoleOpen} onClose={() => state.setIsConsoleOpen(false)} logs={state.logs} logEndRef={state.logEndRef} />
+        {state.recordToDelete && <DeleteConfirmationModal state={state} record={state.recordToDelete} onCancel={() => state.setRecordToDelete(null)} onConfirm={state.handleDeleteDnsRecord} />}
+        <ConsoleDrawer state={state} isOpen={state.isConsoleOpen} onClose={() => state.setIsConsoleOpen(false)} logs={state.logs} logEndRef={state.logEndRef} />
       </main>
 
       <style jsx global>{`

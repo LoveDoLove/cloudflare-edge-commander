@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 
+export type Language = 'en' | 'zh';
+
 export function useCloudflareManager() {
-  // Extended activeTab to include legal pages
+  const [lang, setLang] = useState<Language>('en');
   const [activeTab, setActiveTab] = useState<'auth' | 'edge' | 'utils' | 'privacy' | 'terms'>('auth');
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
@@ -37,6 +39,134 @@ export function useCloudflareManager() {
 
   const logEndRef = useRef<HTMLDivElement>(null);
 
+  // Translation Dictionary
+  const dict = {
+    en: {
+      core_services: "Core Services",
+      legal_compliance: "Legal & Compliance",
+      nav_conn: "Connection",
+      nav_edge: "Edge Manager",
+      nav_lab: "Network Lab",
+      nav_privacy: "Privacy Policy",
+      nav_terms: "Terms of Service",
+      repo: "Repository",
+      monitor_open: "Process Monitor",
+      monitor_close: "Close Monitor",
+      auth_title: "Connectivity & Access",
+      infra_title: "Infrastructure Management",
+      lab_title: "Network Intelligence Lab",
+      privacy_title: "Data Sovereignty",
+      terms_title: "Service Agreement",
+      api_creds: "API Credentials",
+      acc_email: "Account Email",
+      global_key: "Global API Key",
+      establish_session: "Establish Session",
+      active_contexts: "Active Contexts",
+      awaiting_auth: "Awaiting Auth",
+      zone_registry: "Zone Registry",
+      add_domain: "Add domain.com...",
+      add_btn: "Add",
+      select_account: "Select Account First",
+      dns_registry: "Distributed DNS Registry",
+      active_zone: "Active Zone",
+      syncing_dns: "Syncing DNS Records...",
+      create: "Create",
+      proxy: "Proxy",
+      registry_empty: "Registry Empty",
+      ca_deploy: "CA Deployment",
+      authority: "Authority",
+      update_ca: "Update CA",
+      enc_layer: "Encryption Layer",
+      sec_level: "Security Level",
+      enforce_enc: "Enforce Encryption",
+      init_context: "Initialize Zone Context",
+      net_lab: "Network Lab",
+      intel_engine: "Intelligence Engine",
+      ipv6_block: "IPv6 Address / Block",
+      analyze: "Analyze",
+      randomize: "Randomize",
+      output_reg: "Lab Output Registry",
+      system_idle: "System Idle",
+      confirm_del: "Confirm Deletion",
+      del_desc: "Permanently remove this record? This action cannot be reversed.",
+      cancel: "Cancel",
+      delete: "Delete Record",
+      live_logs: "Live Node Logs",
+      waiting_events: "Waiting for events...",
+      copy_ip: "Copy IP",
+      copy_arpa: "Copy ARPA",
+      mapping: "Reverse Mapping",
+      gen_node: "Generated Node",
+      success_acc: "Sync Success: {n} accounts found.",
+      found_zones: "Found {n} zones.",
+      sync_done: "Sync complete.",
+      update_done: "Update successful."
+    },
+    zh: {
+      core_services: "核心服务",
+      legal_compliance: "法律与合规",
+      nav_conn: "连接设置",
+      nav_edge: "边缘管理",
+      nav_lab: "网络实验室",
+      nav_privacy: "隐私政策",
+      nav_terms: "服务条款",
+      repo: "源码仓库",
+      monitor_open: "运行监控",
+      monitor_close: "关闭监控",
+      auth_title: "连接与访问控制",
+      infra_title: "基础设施管理",
+      lab_title: "网络情报实验室",
+      privacy_title: "数据主权声明",
+      terms_title: "服务协议",
+      api_creds: "API 凭据",
+      acc_email: "账号邮箱",
+      global_key: "全局 API 密钥",
+      establish_session: "建立会话",
+      active_contexts: "活跃上下文",
+      awaiting_auth: "等待认证",
+      zone_registry: "区域注册表",
+      add_domain: "添加域名 domain.com...",
+      add_btn: "添加",
+      select_account: "请先选择账号",
+      dns_registry: "分布式 DNS 注册表",
+      active_zone: "活跃区域",
+      syncing_dns: "正在同步 DNS 记录...",
+      create: "创建",
+      proxy: "代理",
+      registry_empty: "注册表为空",
+      ca_deploy: "CA 证书部署",
+      authority: "证书颁发机构",
+      update_ca: "更新 CA",
+      enc_layer: "加密层级",
+      sec_level: "安全级别",
+      enforce_enc: "强制加密",
+      init_context: "初始化区域上下文",
+      net_lab: "网络实验室",
+      intel_engine: "情报引擎",
+      ipv6_block: "IPv6 地址 / 网段",
+      analyze: "分析",
+      randomize: "随机化",
+      output_reg: "实验输出注册表",
+      system_idle: "系统空闲",
+      confirm_del: "确认删除",
+      del_desc: "永久移除此记录？此操作无法撤销。",
+      cancel: "取消",
+      delete: "删除记录",
+      live_logs: "实时节点日志",
+      waiting_events: "等待事件...",
+      copy_ip: "复制 IP",
+      copy_arpa: "复制 ARPA",
+      mapping: "反向映射",
+      gen_node: "生成的节点",
+      success_acc: "同步成功：找到 {n} 个账号。",
+      found_zones: "找到 {n} 个区域。",
+      sync_done: "同步完成。",
+      update_done: "更新成功。"
+    }
+  };
+
+  const t = dict[lang];
+
   useEffect(() => {
     if (isConsoleOpen) { logEndRef.current?.scrollIntoView({ behavior: "smooth" }); }
   }, [logs, isConsoleOpen]);
@@ -64,7 +194,7 @@ export function useCloudflareManager() {
     try {
       const data = await fetchCF('accounts');
       setAccounts(data);
-      addLog(`Sync Success: ${data.length} accounts found.`, 'success');
+      addLog(t.success_acc.replace('{n}', data.length.toString()), 'success');
     } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
     finally { setLoadStates(s => ({ ...s, inv: false })); }
   };
@@ -76,7 +206,7 @@ export function useCloudflareManager() {
     try {
       const data = await fetchCF(`zones?account.id=${accId}`);
       setZones(data);
-      addLog(`Found ${data.length} zones.`, 'success');
+      addLog(t.found_zones.replace('{n}', data.length.toString()), 'success');
     } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
     finally { setLoadStates(s => ({ ...s, zone: false })); }
   };
@@ -96,7 +226,7 @@ export function useCloudflareManager() {
         const records = await fetchCF(`zones/${id}/dns_records`);
         setDnsRecords(records || []);
       } catch (e: any) {}
-      addLog(`Sync complete.`, 'success');
+      addLog(t.sync_done, 'success');
     } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
     finally { setLoadStates(s => ({ ...s, cert: false, dns: false })); }
   };
@@ -121,7 +251,7 @@ export function useCloudflareManager() {
     addLog(`Deleting ${recordToDelete.name}...`, 'info');
     try {
       await fetchCF(`zones/${zoneId}/dns_records/${recordToDelete.id}`, 'DELETE');
-      addLog(`Deleted successfully.`, 'success');
+      addLog(t.update_done, 'success');
       const records = await fetchCF(`zones/${zoneId}/dns_records`);
       setDnsRecords(records);
     } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
@@ -136,7 +266,7 @@ export function useCloudflareManager() {
       await fetchCF(`zones/${zoneId}/dns_records/${editingRecordId}`, 'PATCH', {
         type: editFormData.type, name: editFormData.name, content: editFormData.content, proxied: editFormData.proxied
       });
-      addLog(`Successfully updated ${editFormData.name}`, 'success');
+      addLog(t.update_done, 'success');
       const records = await fetchCF(`zones/${zoneId}/dns_records`);
       setDnsRecords(records);
       setEditingRecordId(null); setEditFormData(null);
@@ -150,7 +280,7 @@ export function useCloudflareManager() {
     addLog(`Updating CA...`, 'info');
     try {
       await fetchCF(`zones/${zoneId}/ssl/universal/settings`, 'PATCH', { certificate_authority: caProvider });
-      addLog(`CA Updated.`, 'success');
+      addLog(t.update_done, 'success');
       setStatus({ type: 'success', message: `CA updated.` });
     } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
     finally { setLoadStates(s => ({ ...s, ca: false })); }
@@ -162,7 +292,7 @@ export function useCloudflareManager() {
     addLog(`Updating Encryption...`, 'info');
     try {
       await fetchCF(`zones/${zoneId}/settings/ssl`, 'PATCH', { value: sslMode });
-      addLog(`SSL Updated.`, 'success');
+      addLog(t.update_done, 'success');
       setStatus({ type: 'success', message: `SSL level updated.` });
     } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
     finally { setLoadStates(s => ({ ...s, ssl: false })); }
@@ -182,6 +312,7 @@ export function useCloudflareManager() {
   };
 
   return {
+    lang, setLang, t,
     activeTab, setActiveTab, isConsoleOpen, setIsConsoleOpen,
     authEmail, setAuthEmail, globalKey, setGlobalKey, handleFetchAccounts,
     accounts, selectedAccountId, handleSelectAccount,
@@ -190,6 +321,6 @@ export function useCloudflareManager() {
     editingRecordId, setEditingRecordId, editFormData, setEditFormData, handleSaveEdit,
     caProvider, setCaProvider, handleApplyCA, sslMode, setSslMode, handleApplySSL,
     ipv6Input, setIpv6Input, labResults, setLabResults, loadStates, status, logs,
-    setNewDomainName, newDomainName, addLog, logEndRef
+    setNewDomainName, newDomainName, addLog, logEndRef, handleAddDomain
   };
 }
