@@ -25,7 +25,7 @@ const DNS_DATA = [
       { type: "MX", name: "Mail Exchanger", en: "Specifies mail server for receiving emails.", zh: "指定负责接收电子邮件的邮件服务器。" },
       { type: "NS", name: "Name Server", en: "Delegates zone to a specific name server.", zh: "委托 DNS 区域使用特定的权威名称服务器。" },
       { type: "PTR", name: "Pointer", en: "Reverse DNS lookup (IP to Domain).", zh: "用于反向 DNS 查询（IP 映射到域名）。" },
-      { type: "SRV", name: "Service", en: "Defines location of specific services.", zh: "定义特定服务的具体位置（主机名和端口）。" },
+      { type: "SRV", name: "Service", en: "Defines location of specific services.", zh: "定义特定服务的具体位置（主机名 and 端口）。" },
     ]
   },
   {
@@ -78,7 +78,7 @@ export const DnsDocsView = ({ lang }: { lang: 'en' | 'zh' }) => {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {DNS_DATA.map((cat, i) => (
-          <div key={i} className="bg-white border border-slate-200 rounded-[2rem] shadow-xl shadow-slate-200/30 overflow-hidden flex flex-col">
+          <div key={i} className="bg-white border border-slate-200 rounded-4xl shadow-xl shadow-slate-200/30 overflow-hidden flex flex-col">
             <div className={`p-6 ${cat.bg} border-b border-slate-100 flex items-center gap-3`}>
               <cat.icon className={`size-5 ${cat.color}`} />
               <h3 className="font-black text-slate-900 uppercase text-xs tracking-widest">
@@ -106,7 +106,7 @@ export const DnsDocsView = ({ lang }: { lang: 'en' | 'zh' }) => {
         ))}
       </div>
 
-      <div className="bg-slate-900 rounded-[2rem] p-8 text-white relative overflow-hidden">
+      <div className="bg-slate-900 rounded-4xl p-8 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 p-4 opacity-10">
           <HelpCircle className="size-24" />
         </div>
@@ -122,7 +122,7 @@ export const DnsDocsView = ({ lang }: { lang: 'en' | 'zh' }) => {
               <li className="flex gap-4">
                 <div className="size-2 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
                 <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                  <strong className="text-white">Proxied (Orange Cloud):</strong> {isZh ? '在 Cloudflare 中，A、AAAA 和 CNAME 可以开启代理以启用 CDN 和防火墙。' : 'In Cloudflare, A, AAAA, and CNAME can be proxied to enable CDN/WAF.'}
+                  <strong className="text-white">Proxied (Orange Cloud):</strong> {isZh ? '在 Cloudflare 中，A、AAAA and CNAME 可以开启代理以启用 CDN and 防火墙。' : 'In Cloudflare, A, AAAA, and CNAME can be proxied to enable CDN/WAF.'}
                 </p>
               </li>
               <li className="flex gap-4">
