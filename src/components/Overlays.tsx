@@ -6,12 +6,12 @@ import { ShieldAlert, Terminal, X, GripHorizontal, Trash2 } from 'lucide-react';
 export const DeleteConfirmationModal = ({ state, record, onCancel, onConfirm }: any) => {
   const { t } = state;
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 m-4 border border-slate-200 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="size-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center shadow-inner"><ShieldAlert className="size-8" /></div>
           <div className="space-y-2"><h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">{t.confirm_del}</h3><p className="text-sm text-slate-500 font-medium">{t.del_desc}</p></div>
-          <div className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col gap-1.5 text-left"><div className="flex justify-between items-center"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</span><span className="text-xs font-black text-indigo-600">{record.type}</span></div><div className="flex justify-between items-center"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</span><span className="text-xs font-bold text-slate-900 truncate max-w-[180px]">{record.name}</span></div></div>
+          <div className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col gap-1.5 text-left"><div className="flex justify-between items-center"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</span><span className="text-xs font-black text-indigo-600">{record.type}</span></div><div className="flex justify-between items-center"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</span><span className="text-xs font-bold text-slate-900 truncate max-w-45">{record.name}</span></div></div>
           <div className="grid grid-cols-2 gap-3 w-full pt-4">
             <button onClick={onCancel} className="btn btn-ghost rounded-2xl font-black uppercase text-[11px] h-12 border border-slate-200 text-slate-600">{t.cancel}</button>
             <button onClick={onConfirm} className="btn bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black uppercase text-[11px] h-12 border-none shadow-lg shadow-rose-200 transition-all active:scale-95">{t.delete}</button>
@@ -75,7 +75,7 @@ export const ConsoleDrawer = ({ state, isOpen, onClose, logs, logEndRef }: any) 
       {/* Resizing Handle */}
       <div 
         onMouseDown={handleMouseDown}
-        className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-orange-500/40 transition-colors z-[60] flex items-center justify-center group"
+        className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-orange-500/40 transition-colors z-60 flex items-center justify-center group"
       >
         <div className="w-12 h-1 bg-slate-700 rounded-full group-hover:bg-orange-500 transition-colors" />
       </div>
@@ -114,7 +114,7 @@ export const ConsoleDrawer = ({ state, isOpen, onClose, logs, logEndRef }: any) 
                   <Terminal className="size-16 mb-4" /><p className="font-black uppercase tracking-[0.5em] text-xs">{t.waiting_events}</p>
               </div>
           ) : logs.map((log: any, i: number) => (
-            <div key={i} className="flex gap-6 group border-b border-white/[0.02] pb-2 hover:bg-white/[0.01] transition-colors items-start">
+            <div key={i} className="flex gap-6 group border-b border-white/2 pb-2 hover:bg-white/1 transition-colors items-start">
               <span className="text-slate-600 shrink-0 tabular-nums font-bold select-none">[{log.time}]</span>
               <span className={`shrink-0 font-black tracking-widest text-[9px] px-1.5 py-0.5 rounded border ${
                 log.type === 'success' ? 'text-emerald-500 border-emerald-500/30 bg-emerald-500/5' : 
