@@ -33,7 +33,10 @@ import {
   Network, 
   CloudCog, 
   X, 
-  Shield
+  Shield,
+  Edit3,
+  Check,
+  RotateCcw
 } from 'lucide-react';
 
 /**
@@ -129,7 +132,10 @@ export default function App() {
   const [newDomainName, setNewDomainName] = useState('');
   const [newDns, setNewDns] = useState({ type: 'A', name: '', content: '', ttl: 1, proxied: false });
 
+  // Delete & Edit states
   const [recordToDelete, setRecordToDelete] = useState<any | null>(null);
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState<any | null>(null);
 
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -223,6 +229,7 @@ export default function App() {
     setSelectedZoneName(name);
     setCerts([]);
     setDnsRecords([]);
+    setEditingRecordId(null);
     setCertLoading(true);
     setDnsLoading(true);
     addLog(`Context: ${name}...`, 'info');
@@ -286,6 +293,40 @@ export default function App() {
     } finally {
       setDnsLoading(false);
       setRecordToDelete(null);
+    }
+  };
+
+  // Inline Edit Handlers
+  const handleStartEdit = (record: any) => {
+    setEditingRecordId(record.id);
+    setEditFormData({ ...record });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRecordId(null);
+    setEditFormData(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!zoneId || !editingRecordId || !editFormData) return;
+    setDnsLoading(true);
+    addLog(`Updating record: ${editFormData.name}...`, 'info');
+    try {
+      await fetchCF(`zones/${zoneId}/dns_records/${editingRecordId}`, 'PATCH', {
+        type: editFormData.type,
+        name: editFormData.name,
+        content: editFormData.content,
+        proxied: editFormData.proxied
+      });
+      addLog(`Successfully updated ${editFormData.name}`, 'success');
+      const records = await fetchCF(`zones/${zoneId}/dns_records`);
+      setDnsRecords(records);
+      setEditingRecordId(null);
+      setEditFormData(null);
+    } catch (err: any) {
+      addLog(`Update Error: ${err.message}`, 'error');
+    } finally {
+      setDnsLoading(false);
     }
   };
 
@@ -398,11 +439,11 @@ export default function App() {
                   <div className="space-y-4">
                     <div className="form-control">
                       <label className="label py-1 px-1"><span className="label-text text-[10px] font-black uppercase text-slate-600 tracking-wide">Account Email</span></label>
-                      <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className="input input-md bg-slate-50 border-slate-200 w-full rounded-xl text-sm font-bold h-11 focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all" placeholder="user@cloudflare.com" />
+                      <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className="input input-md bg-slate-50 border-slate-200 w-full rounded-xl text-sm font-bold h-11 focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all shadow-sm" placeholder="user@cloudflare.com" />
                     </div>
                     <div className="form-control">
                       <label className="label py-1 px-1"><span className="label-text text-[10px] font-black uppercase text-slate-600 tracking-wide">Global API Key</span></label>
-                      <input type="password" value={globalKey} onChange={(e) => setGlobalKey(e.target.value)} className="input input-md bg-slate-50 border-slate-200 w-full rounded-xl text-sm font-bold h-11 focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all" placeholder="••••••••••••••••••••••••" />
+                      <input type="password" value={globalKey} onChange={(e) => setGlobalKey(e.target.value)} className="input input-md bg-slate-50 border-slate-200 w-full rounded-xl text-sm font-bold h-11 focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all shadow-sm" placeholder="••••••••••••••••••••••••" />
                     </div>
                     <button 
                       onClick={handleFetchAccounts} 
@@ -420,7 +461,7 @@ export default function App() {
                     <div className="size-11 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shadow-inner"><List className="size-6" /></div>
                     <h3 className="font-black text-slate-900 text-base tracking-tight uppercase">Active Contexts</h3>
                   </div>
-                  <div className="flex-1 overflow-y-auto divide-y divide-slate-50 border border-slate-100 rounded-2xl mt-6 max-h-[300px] custom-scrollbar-light">
+                  <div className="flex-1 overflow-y-auto divide-y divide-slate-50 border border-slate-100 rounded-2xl mt-6 max-h-[300px] custom-scrollbar-light shadow-inner bg-slate-50/30">
                     {accounts.length === 0 ? (
                       <div className="p-16 text-center flex flex-col items-center opacity-30">
                         <Activity className="size-10 mb-3" />
@@ -444,7 +485,7 @@ export default function App() {
 
             {/* View: Edge Manager */}
             {activeTab === 'edge' && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                   
                   <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl shadow-lg shadow-slate-200/40 flex flex-col overflow-hidden transition-all duration-500">
@@ -455,7 +496,7 @@ export default function App() {
                     <div className="p-5 space-y-5">
                        {selectedAccountId && (
                           <div className="flex gap-2">
-                            <input type="text" placeholder="Add domain.com..." value={newDomainName} onChange={(e) => setNewDomainName(e.target.value)} className="input input-sm bg-white border-slate-200 flex-1 rounded-xl text-[11px] font-bold h-11 focus:ring-4 focus:ring-indigo-50" />
+                            <input type="text" placeholder="Add domain.com..." value={newDomainName} onChange={(e) => setNewDomainName(e.target.value)} className="input input-sm bg-white border-slate-200 flex-1 rounded-xl text-[11px] font-bold h-11 focus:ring-4 focus:ring-indigo-50 shadow-sm" />
                             <button onClick={handleAddDomain} disabled={addDomainLoading} className="btn btn-md btn-primary rounded-xl h-11 px-4 border-none shadow-md text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50">Add</button>
                           </div>
                        )}
@@ -487,6 +528,7 @@ export default function App() {
                              {dnsLoading && <Loader2 className="size-5 animate-spin text-indigo-600" />}
                           </div>
 
+                          {/* Record Creation Form */}
                           <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-inner">
                              <select value={newDns.type} onChange={e => { const type = e.target.value; setNewDns({...newDns, type, proxied: canBeProxied(type) ? newDns.proxied : false}); }} className="select select-sm select-bordered bg-white font-black h-11 text-[11px] sm:col-span-1 rounded-xl focus:outline-none shadow-sm">{DNS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select>
                              <input type="text" placeholder="Name (@)" value={newDns.name} onChange={e => setNewDns({...newDns, name: e.target.value})} className="input input-sm bg-white border-slate-200 h-11 text-[11px] font-black sm:col-span-1 rounded-xl focus:ring-4 focus:ring-indigo-100 shadow-sm" />
@@ -502,6 +544,7 @@ export default function App() {
                              <button onClick={handleAddDnsRecord} disabled={dnsLoading} className="btn btn-md btn-primary h-11 font-black uppercase sm:col-span-1 rounded-xl border-none shadow-lg shadow-indigo-100 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50">Create</button>
                           </div>
 
+                          {/* DNS Table Container */}
                           <div className="max-h-80 overflow-auto border border-slate-200 rounded-2xl relative min-h-[180px] shadow-inner bg-white">
                              {dnsLoading ? (
                                <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 gap-3">
@@ -516,31 +559,79 @@ export default function App() {
                                       <th className="px-5 py-4 w-32">Name</th>
                                       <th className="px-5 py-4">Content</th>
                                       <th className="px-5 py-4 text-center w-20">Proxy</th>
-                                      <th className="px-5 py-4 text-right w-20">Action</th>
+                                      <th className="px-5 py-4 text-right w-32">Action</th>
                                     </tr>
                                   </thead>
                                   <tbody>
                                     {dnsRecords.map(r => (
-                                      <tr key={r.id} className="hover:bg-indigo-50/50 border-b border-slate-100 last:border-0 transition-colors">
-                                        <td className="px-5 py-4 font-black text-indigo-700 text-[11px]">{r.type}</td>
-                                        <td className="px-5 py-4 font-bold text-slate-900 text-[11px] truncate max-w-[120px]">{r.name}</td>
-                                        <td className="px-5 py-4 text-[10px] font-mono text-slate-600 break-all">{r.content}</td>
-                                        <td className="px-5 py-4 text-center">
-                                          {r.proxied ? (
-                                            <div className="size-3 mx-auto rounded-full bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.4)] border-2 border-white" title="Proxied" />
-                                          ) : (
-                                            <div className="size-3 mx-auto rounded-full bg-slate-200 border-2 border-white" title="DNS Only" />
-                                          )}
-                                        </td>
-                                        <td className="px-5 py-4 text-right">
-                                          <button 
-                                            onClick={() => setRecordToDelete(r)} 
-                                            className="btn btn-ghost btn-xs text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all hover:scale-110 flex items-center justify-center ml-auto"
-                                            title="Delete Record"
-                                          >
-                                            <Trash2 className="size-4" />
-                                          </button>
-                                        </td>
+                                      <tr key={r.id} className={`hover:bg-indigo-50/50 border-b border-slate-100 last:border-0 transition-colors ${editingRecordId === r.id ? 'bg-amber-50/30' : ''}`}>
+                                        {editingRecordId === r.id ? (
+                                          /* EDITING ROW */
+                                          <>
+                                            <td className="px-2 py-2">
+                                              <select value={editFormData.type} onChange={e => setEditFormData({...editFormData, type: e.target.value, proxied: canBeProxied(e.target.value) ? editFormData.proxied : false})} className="select select-xs select-bordered w-full bg-white font-bold h-9 text-[10px] rounded-lg shadow-sm">
+                                                {DNS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                              </select>
+                                            </td>
+                                            <td className="px-2 py-2">
+                                              <input type="text" value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} className="input input-xs input-bordered w-full bg-white font-bold h-9 text-[10px] rounded-lg shadow-sm" />
+                                            </td>
+                                            <td className="px-2 py-2">
+                                              <input type="text" value={editFormData.content} onChange={e => setEditFormData({...editFormData, content: e.target.value})} className="input input-xs input-bordered w-full bg-white font-bold h-9 text-[10px] rounded-lg shadow-sm" />
+                                            </td>
+                                            <td className="px-2 py-2 text-center">
+                                              {canBeProxied(editFormData.type) ? (
+                                                <button 
+                                                  onClick={() => setEditFormData({...editFormData, proxied: !editFormData.proxied})}
+                                                  className={`size-6 mx-auto rounded-full border-2 border-white shadow-sm transition-all flex items-center justify-center ${editFormData.proxied ? 'bg-orange-400' : 'bg-slate-200'}`}
+                                                  title={editFormData.proxied ? "Proxied Status ON" : "Proxied Status OFF"}
+                                                >
+                                                   <div className={`size-1.5 rounded-full bg-white transition-transform ${editFormData.proxied ? 'scale-110' : 'scale-75 opacity-40'}`} />
+                                                </button>
+                                              ) : (
+                                                <span className="text-[8px] font-black text-slate-300 uppercase">N/A</span>
+                                              )}
+                                            </td>
+                                            <td className="px-2 py-2 text-right">
+                                              <div className="flex items-center justify-end gap-1.5 pt-1">
+                                                <button onClick={handleSaveEdit} className="btn btn-xs bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm text-white px-2 border-none" title="Save Changes"><Check className="size-3.5" /></button>
+                                                <button onClick={handleCancelEdit} className="btn btn-xs btn-ghost bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 hover:text-slate-900 px-2" title="Cancel"><X className="size-3.5" /></button>
+                                              </div>
+                                            </td>
+                                          </>
+                                        ) : (
+                                          /* VIEW ROW */
+                                          <>
+                                            <td className="px-5 py-4 font-black text-indigo-700 text-[11px]">{r.type}</td>
+                                            <td className="px-5 py-4 font-bold text-slate-900 text-[11px] truncate max-w-[120px]">{r.name}</td>
+                                            <td className="px-5 py-4 text-[10px] font-mono text-slate-600 break-all">{r.content}</td>
+                                            <td className="px-5 py-4 text-center">
+                                              {r.proxied ? (
+                                                <div className="size-3 mx-auto rounded-full bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.4)] border-2 border-white" title="Proxied" />
+                                              ) : (
+                                                <div className="size-3 mx-auto rounded-full bg-slate-200 border-2 border-white" title="DNS Only" />
+                                              )}
+                                            </td>
+                                            <td className="px-5 py-4 text-right">
+                                              <div className="flex items-center justify-end gap-2">
+                                                <button 
+                                                  onClick={() => handleStartEdit(r)} 
+                                                  className="btn btn-ghost btn-xs text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                                                  title="Edit Record"
+                                                >
+                                                  <Edit3 className="size-4" />
+                                                </button>
+                                                <button 
+                                                  onClick={() => setRecordToDelete(r)} 
+                                                  className="btn btn-ghost btn-xs text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                                  title="Delete Record"
+                                                >
+                                                  <Trash2 className="size-4" />
+                                                </button>
+                                              </div>
+                                            </td>
+                                          </>
+                                        )}
                                       </tr>
                                     ))}
                                     {dnsRecords.length === 0 && !dnsLoading && (
@@ -553,7 +644,7 @@ export default function App() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           <div className="bg-slate-900 rounded-2xl p-7 shadow-2xl shadow-slate-900/40 space-y-6 flex flex-col min-h-[220px] relative overflow-hidden">
+                           <div className="bg-slate-900 rounded-2xl p-7 shadow-2xl shadow-slate-900/40 space-y-6 flex flex-col min-h-[220px] relative overflow-hidden text-white">
                               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/5 blur-3xl rounded-full" />
                               <div className="flex items-center gap-3 relative z-10">
                                 <div className="size-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20 shadow-inner"><Award className="size-5" /></div>
@@ -565,15 +656,15 @@ export default function App() {
                                 <>
                                   <div className="form-control flex-1">
                                     <label className="label py-1.5"><span className="label-text text-slate-400 text-[10px] font-black uppercase tracking-widest">Issuing Authority</span></label>
-                                    <select value={caProvider} onChange={(e) => setCaProvider(e.target.value)} className="select select-sm bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-11 focus:ring-2 focus:ring-indigo-500/40 outline-none">
+                                    <select value={caProvider} onChange={(e) => setCaProvider(e.target.value)} className="select select-sm bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-11 focus:ring-2 focus:ring-indigo-500/40 outline-none shadow-inner">
                                       <option value="google">Google Trust Services</option><option value="lets_encrypt">Let's Encrypt</option><option value="ssl_com">SSL.com</option><option value="digicert">DigiCert</option>
                                     </select>
                                   </div>
-                                  <button onClick={handleApplyCA} disabled={caLoading} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-[10px] h-12 border-none shadow-lg shadow-indigo-950/50 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50">Update CA Provider</button>
+                                  <button onClick={handleApplyCA} disabled={caLoading} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-[10px] h-12 border-none shadow-lg shadow-indigo-950/50 text-white hover:bg-indigo-700 active:bg-indigo-800">Update CA Provider</button>
                                 </>
                               )}
                            </div>
-                           <div className="bg-slate-900 rounded-2xl p-7 shadow-2xl shadow-slate-900/40 space-y-6 flex flex-col min-h-[220px] relative overflow-hidden">
+                           <div className="bg-slate-900 rounded-2xl p-7 shadow-2xl shadow-slate-900/40 space-y-6 flex flex-col min-h-[220px] relative overflow-hidden text-white">
                               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full" />
                               <div className="flex items-center gap-3 relative z-10">
                                 <div className="size-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20 shadow-inner"><Shield className="size-5" /></div>
@@ -585,11 +676,11 @@ export default function App() {
                                 <>
                                   <div className="form-control flex-1">
                                     <label className="label py-1.5"><span className="label-text text-slate-400 text-[10px] font-black uppercase tracking-widest">Security Level</span></label>
-                                    <select value={sslMode} onChange={(e) => setSslMode(e.target.value)} className="select select-sm bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-11 focus:ring-2 focus:ring-indigo-500/40 outline-none">
+                                    <select value={sslMode} onChange={(e) => setSslMode(e.target.value)} className="select select-sm bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-11 focus:ring-2 focus:ring-indigo-500/40 outline-none shadow-inner">
                                       <option value="off">Off (Dev Only)</option><option value="flexible">Flexible</option><option value="full">Full</option><option value="strict">Full (Strict)</option>
                                     </select>
                                   </div>
-                                  <button onClick={handleApplySSL} disabled={sslLoading} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-[10px] h-12 border-none shadow-lg shadow-indigo-950/50 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50">Enforce Encryption</button>
+                                  <button onClick={handleApplySSL} disabled={sslLoading} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-[10px] h-12 border-none shadow-lg shadow-indigo-950/50 text-white hover:bg-indigo-700 active:bg-indigo-800">Enforce Encryption</button>
                                 </>
                               )}
                            </div>
@@ -631,7 +722,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Delete Confirmation Modal Overlay */}
+        {/* Delete Confirmation Modal */}
         {recordToDelete && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 m-4 border border-slate-200 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
@@ -641,7 +732,7 @@ export default function App() {
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Confirm Deletion</h3>
-                  <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                  <p className="text-sm text-slate-500 font-medium leading-relaxed text-center">
                     Are you sure you want to permanently remove this record? This action cannot be reversed.
                   </p>
                 </div>
@@ -660,13 +751,13 @@ export default function App() {
                 <div className="grid grid-cols-2 gap-3 w-full pt-4">
                   <button 
                     onClick={() => setRecordToDelete(null)}
-                    className="btn btn-ghost rounded-2xl font-black uppercase text-[11px] tracking-widest h-12 hover:bg-slate-100 text-slate-600 hover:text-slate-900 active:bg-slate-200"
+                    className="btn btn-ghost rounded-2xl font-black uppercase text-[11px] tracking-widest h-12 hover:bg-slate-100 text-slate-600 hover:text-slate-900 active:bg-slate-200 transition-colors border border-slate-200"
                   >
                     Cancel
                   </button>
                   <button 
                     onClick={handleDeleteDnsRecord}
-                    className="btn bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest h-12 border-none shadow-lg shadow-rose-200 transition-transform active:scale-95"
+                    className="btn bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest h-12 border-none shadow-lg shadow-rose-200 transition-all active:scale-95"
                   >
                     Delete Record
                   </button>
@@ -681,12 +772,12 @@ export default function App() {
           <div className="h-full flex flex-col">
             <div className="bg-slate-800/70 px-8 py-3.5 flex items-center justify-between border-b border-slate-700/50">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2.5">
-                <div className="flex gap-1.5"><div className="size-2 rounded-full bg-rose-500/80" /><div className="size-2 rounded-full bg-amber-500/80" /><div className="size-2 rounded-full bg-emerald-500/80" /></div>
+                <div className="flex gap-1.5"><div className="size-2 rounded-full bg-rose-500/80 shadow-sm" /><div className="size-2 rounded-full bg-amber-500/80 shadow-sm" /><div className="size-2 rounded-full bg-emerald-500/80 shadow-sm" /></div>
                 <Terminal className="size-4 ml-2" /> Live Node Logs
               </span>
               <button onClick={() => setIsConsoleOpen(false)} className="text-slate-500 hover:text-white p-1 transition-all hover:rotate-90 duration-300"><X className="size-5" /></button>
             </div>
-            <div className="flex-1 p-6 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-2 custom-scrollbar bg-slate-950/40 text-slate-300">
+            <div className="flex-1 p-6 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-2 custom-scrollbar bg-slate-950/40 text-slate-300 shadow-inner">
               {logs.map((log, i) => (
                 <div key={i} className="flex gap-6 group border-b border-white/[0.02] pb-2 hover:bg-white/[0.01] transition-colors">
                   <span className="text-slate-600 shrink-0 tabular-nums font-bold">[{log.time}]</span>
