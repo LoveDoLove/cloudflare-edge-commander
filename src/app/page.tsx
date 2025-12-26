@@ -3,13 +3,14 @@
 import React from 'react';
 import { 
   ShieldCheck, LayoutDashboard, CloudCog, Network, Github, Terminal, 
-  Lock, Scale, Languages 
+  Lock, Scale, BookOpen 
 } from 'lucide-react';
 
 import { useCloudflareManager } from '@/hooks/useCloudflareManager';
 import { ConnectivityView } from '@/components/views/ConnectivityView';
 import { EdgeManagerView } from '@/components/views/EdgeManagerView';
 import { NetworkLabView } from '@/components/views/NetworkLabView';
+import { DnsDocsView } from '@/components/views/DnsDocsView'; // Added import
 import { PrivacyView, TermsView } from '@/components/views/LegalViews';
 import { DeleteConfirmationModal, ConsoleDrawer } from '@/components/Overlays';
 
@@ -83,7 +84,8 @@ export default function App() {
             {[
               { id: 'auth', label: t.nav_conn, icon: LayoutDashboard },
               { id: 'edge', label: t.nav_edge, icon: CloudCog },
-              { id: 'utils', label: t.nav_lab, icon: Network }
+              { id: 'utils', label: t.nav_lab, icon: Network },
+              { id: 'docs', label: t.nav_docs, icon: BookOpen } // Added Documentation
             ].map(tab => (
               <button 
                 key={tab.id} onClick={() => state.setActiveTab(tab.id as any)}
@@ -129,6 +131,7 @@ export default function App() {
             {state.activeTab === 'auth' && t.auth_title}
             {state.activeTab === 'edge' && t.infra_title}
             {state.activeTab === 'utils' && t.lab_title}
+            {state.activeTab === 'docs' && t.docs_title}
             {state.activeTab === 'privacy' && t.privacy_title}
             {state.activeTab === 'terms' && t.terms_title}
           </h2>
@@ -145,6 +148,7 @@ export default function App() {
             {state.activeTab === 'auth' && <ConnectivityView state={state} />}
             {state.activeTab === 'edge' && <EdgeManagerView state={state} />}
             {state.activeTab === 'utils' && <NetworkLabView state={state} utils={utils} />}
+            {state.activeTab === 'docs' && <DnsDocsView lang={state.lang} />}
             {state.activeTab === 'privacy' && <PrivacyView lang={state.lang} />}
             {state.activeTab === 'terms' && <TermsView lang={state.lang} />}
           </div>
