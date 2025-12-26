@@ -6,8 +6,8 @@ export type Language = 'en' | 'zh';
 
 export function useCloudflareManager() {
   const [lang, setLang] = useState<Language>('en');
-  // Added 'docs' to activeTab type
-  const [activeTab, setActiveTab] = useState<'auth' | 'edge' | 'utils' | 'docs' | 'privacy' | 'terms'>('auth');
+  // Restored individual tabs for specific views
+  const [activeTab, setActiveTab] = useState<'auth' | 'edge' | 'utils' | 'docs' | 'about' | 'privacy' | 'terms'>('auth');
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
   const [globalKey, setGlobalKey] = useState('');
@@ -43,11 +43,12 @@ export function useCloudflareManager() {
   const dict = {
     en: {
       core_services: "Core Services",
-      legal_compliance: "Legal & Compliance",
+      legal_compliance: "Project & Legal",
       nav_conn: "Connection",
       nav_edge: "Edge Manager",
       nav_lab: "Network Lab",
       nav_docs: "DNS Guide",
+      nav_about: "About Us",
       nav_privacy: "Privacy Policy",
       nav_terms: "Terms of Service",
       repo: "Repository",
@@ -57,6 +58,7 @@ export function useCloudflareManager() {
       infra_title: "Infrastructure Management",
       lab_title: "Network Intelligence Lab",
       docs_title: "DNS Reference Registry",
+      about_title: "Project Intelligence",
       privacy_title: "Data Sovereignty",
       terms_title: "Service Agreement",
       api_creds: "API Credentials",
@@ -106,11 +108,12 @@ export function useCloudflareManager() {
     },
     zh: {
       core_services: "核心服务",
-      legal_compliance: "法律与合规",
+      legal_compliance: "项目与法律",
       nav_conn: "连接设置",
       nav_edge: "边缘管理",
       nav_lab: "网络实验室",
       nav_docs: "DNS 指南",
+      nav_about: "关于我们",
       nav_privacy: "隐私政策",
       nav_terms: "服务条款",
       repo: "源码仓库",
@@ -120,6 +123,7 @@ export function useCloudflareManager() {
       infra_title: "基础设施管理",
       lab_title: "网络情报实验室",
       docs_title: "DNS 参考注册表",
+      about_title: "项目情报中心",
       privacy_title: "数据主权声明",
       terms_title: "服务协议",
       api_creds: "API 凭据",

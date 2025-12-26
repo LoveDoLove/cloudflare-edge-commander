@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { 
-  ShieldCheck, LayoutDashboard, CloudCog, Network, Github, Terminal, 
-  Lock, Scale, BookOpen, Layers 
+  LayoutDashboard, CloudCog, Network, Github, Terminal, 
+  BookOpen, Layers, Info, Lock, Scale 
 } from 'lucide-react';
 
 import { useCloudflareManager } from '@/hooks/useCloudflareManager';
@@ -11,7 +11,9 @@ import { ConnectivityView } from '@/components/views/ConnectivityView';
 import { EdgeManagerView } from '@/components/views/EdgeManagerView';
 import { NetworkLabView } from '@/components/views/NetworkLabView';
 import { DnsDocsView } from '@/components/views/DnsDocsView'; 
-import { PrivacyView, TermsView } from '@/components/views/LegalViews';
+import { AboutView } from '@/components/views/AboutViews';
+import { PrivacyView } from '@/components/views/PrivacyViews';
+import { TermsView } from '@/components/views/TermsViews';
 import { DeleteConfirmationModal, ConsoleDrawer } from '@/components/Overlays';
 
 const utils = {
@@ -107,12 +109,13 @@ export default function App() {
            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-2">{t.legal_compliance}</p>
            <nav className="space-y-1">
             {[
+              { id: 'about', label: t.nav_about, icon: Info },
               { id: 'privacy', label: t.nav_privacy, icon: Lock },
               { id: 'terms', label: t.nav_terms, icon: Scale }
             ].map(tab => (
               <button 
                 key={tab.id} onClick={() => state.setActiveTab(tab.id as any)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${state.activeTab === tab.id ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${state.activeTab === tab.id ? 'bg-white/10 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
               >
                 <tab.icon className="size-4" /> {tab.label}
               </button>
@@ -138,6 +141,7 @@ export default function App() {
             {state.activeTab === 'edge' && t.infra_title}
             {state.activeTab === 'utils' && t.lab_title}
             {state.activeTab === 'docs' && t.docs_title}
+            {state.activeTab === 'about' && t.about_title}
             {state.activeTab === 'privacy' && t.privacy_title}
             {state.activeTab === 'terms' && t.terms_title}
           </h2>
@@ -155,6 +159,7 @@ export default function App() {
             {state.activeTab === 'edge' && <EdgeManagerView state={state} />}
             {state.activeTab === 'utils' && <NetworkLabView state={state} utils={utils} />}
             {state.activeTab === 'docs' && <DnsDocsView lang={state.lang} />}
+            {state.activeTab === 'about' && <AboutView lang={state.lang} />}
             {state.activeTab === 'privacy' && <PrivacyView lang={state.lang} />}
             {state.activeTab === 'terms' && <TermsView lang={state.lang} />}
           </div>
