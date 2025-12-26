@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 export type Language = 'en' | 'zh';
 
 export function useCloudflareManager() {
-  const [lang, setLang] = useState<Language>('en');
+  const [lang, setLangState] = useState<Language>('en');
   const [activeTab, setActiveTab] = useState<'auth' | 'edge' | 'utils' | 'docs' | 'about' | 'privacy' | 'terms'>('auth');
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   
@@ -42,6 +42,19 @@ export function useCloudflareManager() {
   const [editFormData, setEditFormData] = useState<any | null>(null);
 
   const logEndRef = useRef<HTMLDivElement>(null);
+
+  // Persistence logic for Language
+  useEffect(() => {
+    const savedLang = localStorage.getItem('commander_pref_lang');
+    if (savedLang === 'en' || savedLang === 'zh') {
+      setLangState(savedLang as Language);
+    }
+  }, []);
+
+  const setLang = (newLang: Language) => {
+    setLangState(newLang);
+    localStorage.setItem('commander_pref_lang', newLang);
+  };
 
   const dict = {
     en: {
@@ -182,7 +195,6 @@ export function useCloudflareManager() {
     if (isConsoleOpen) { logEndRef.current?.scrollIntoView({ behavior: "smooth" }); }
   }, [logs, isConsoleOpen]);
 
-  // UX Fix: Removed the auto-setIsConsoleOpen call to prevent annoying popups
   const addLog = (msg: string, type = 'info') => {
     setLogs(prev => [...prev, { msg, type, time: new Date().toLocaleTimeString() }]);
   };
@@ -325,7 +337,7 @@ export function useCloudflareManager() {
   return {
     lang, setLang, t,
     activeTab, setActiveTab, isConsoleOpen, setIsConsoleOpen,
-    consoleHeight, setConsoleHeight, // Persistent height
+    consoleHeight, setConsoleHeight,
     authEmail, setAuthEmail, globalKey, setGlobalKey, handleFetchAccounts,
     accounts, selectedAccountId, handleSelectAccount,
     zones, zoneId, selectedZoneName, handleSelectZone,
