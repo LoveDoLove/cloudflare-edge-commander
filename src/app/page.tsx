@@ -14,7 +14,6 @@ import {
   Lock, 
   Copy, 
   Mail, 
-  Hash, 
   Activity, 
   Dices, 
   RefreshCcw, 
@@ -27,7 +26,10 @@ import {
   List,
   ChevronRight,
   Settings2,
-  Award
+  Award,
+  PlusCircle,
+  Trash2,
+  Save
 } from 'lucide-react';
 
 /**
@@ -93,6 +95,8 @@ export default function Home() {
   const [invLoading, setInvLoading] = useState(false);
   const [zoneLoading, setZoneLoading] = useState(false);
   const [certLoading, setCertLoading] = useState(false);
+  const [addDomainLoading, setAddDomainLoading] = useState(false);
+  const [dnsLoading, setDnsLoading] = useState(false);
   
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [logs, setLogs] = useState<{ msg: string, type: string, time: string }[]>([]);
@@ -100,11 +104,16 @@ export default function Home() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [zones, setZones] = useState<any[]>([]);
   const [certs, setCerts] = useState<any[]>([]);
+  const [dnsRecords, setDnsRecords] = useState<any[]>([]);
   
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [selectedAccountName, setSelectedAccountName] = useState<string | null>(null);
   const [selectedZoneName, setSelectedZoneName] = useState<string | null>(null);
   const [caProvider, setCaProvider] = useState<string>('google');
   const [sslMode, setSslMode] = useState<string>('strict');
+  const [newDomainName, setNewDomainName] = useState('');
+
+  const [newDns, setNewDns] = useState({ type: 'A', name: '', content: '', ttl: 1, proxied: false });
 
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -161,6 +170,7 @@ export default function Home() {
 
   const handleSelectAccount = async (accId: string, accName: string) => {
     setSelectedAccountId(accId);
+    setSelectedAccountName(accName);
     setZones([]);
     setCerts([]);
     setZoneId('');
@@ -177,66 +187,105 @@ export default function Home() {
     }
   };
 
+  const handleAddDomain = async () => {
+    if (!selectedAccountId || !newDomainName) return;
+    setAddDomainLoading(true);
+    addLog(`Attempting to add new domain: ${newDomainName}...`, 'info');
+    try {
+      await fetchCF('zones', 'POST', {
+        name: newDomainName,
+        account: { id: selectedAccountId }
+      });
+      addLog(`Success: Domain ${newDomainName} added to account.`, 'success');
+      setNewDomainName('');
+      handleSelectAccount(selectedAccountId, selectedAccountName || '');
+    } catch (err: any) {
+      addLog(`Add Domain Error: ${err.message}`, 'error');
+      setStatus({ type: 'error', message: `Failed to add domain: ${err.message}` });
+    } finally {
+      setAddDomainLoading(false);
+    }
+  };
+
   const handleSelectZone = async (id: string, name: string) => {
     setZoneId(id);
     setSelectedZoneName(name);
     setCerts([]);
+    setDnsRecords([]);
     setCertLoading(true);
-    addLog(`Domain selected: ${name}. Auto-fetching edge certificates & settings...`, 'info');
+    setDnsLoading(true);
+    addLog(`Domain selected: ${name}. Synchronizing records...`, 'info');
     
     try {
-      // 1. Universal SSL Settings
       try {
         const universalSettings = await fetchCF(`zones/${id}/ssl/universal/settings`);
-        if (universalSettings?.certificate_authority) {
-          setCaProvider(universalSettings.certificate_authority);
-          addLog(`Active CA Provider: ${universalSettings.certificate_authority}`, 'info');
-        }
-      } catch (e: any) {
-        addLog(`Could not fetch Universal SSL settings: ${e.message}`, 'error');
-      }
-
-      // 2. SSL Level Settings
-      try {
+        if (universalSettings?.certificate_authority) setCaProvider(universalSettings.certificate_authority);
         const sslSettings = await fetchCF(`zones/${id}/settings/ssl`);
         if (sslSettings?.value) setSslMode(sslSettings.value);
-      } catch (e: any) {
-        addLog(`Could not fetch SSL level: ${e.message}`, 'error');
-      }
+      } catch (e: any) { addLog(`Cert settings error: ${e.message}`, 'error'); }
 
-      // 3. Certificate Packs
+      try {
+        const records = await fetchCF(`zones/${id}/dns_records`);
+        setDnsRecords(records || []);
+        addLog(`Successfully retrieved ${records?.length} DNS records.`, 'success');
+      } catch (e: any) { addLog(`DNS fetch error: ${e.message}`, 'error'); }
+
       try {
         const certPacks = await fetchCF(`zones/${id}/ssl/certificate_packs`);
         setCerts(certPacks || []);
-      } catch (e: any) {
-        addLog(`Could not fetch certificate packs: ${e.message}`, 'error');
-      }
+      } catch (e: any) { addLog(`Cert pack error: ${e.message}`, 'error'); }
       
       addLog(`Domain sync completed for ${name}.`, 'success');
     } catch (err: any) {
       addLog(`General Zone Data Error: ${err.message}`, 'error');
     } finally {
       setCertLoading(false);
+      setDnsLoading(false);
+    }
+  };
+
+  const handleAddDnsRecord = async () => {
+    if (!zoneId || !newDns.name || !newDns.content) return;
+    setDnsLoading(true);
+    addLog(`Adding ${newDns.type} record: ${newDns.name}...`, 'info');
+    try {
+      await fetchCF(`zones/${zoneId}/dns_records`, 'POST', newDns);
+      addLog(`Success: DNS record ${newDns.name} created.`, 'success');
+      setNewDns({ type: 'A', name: '', content: '', ttl: 1, proxied: false });
+      const records = await fetchCF(`zones/${zoneId}/dns_records`);
+      setDnsRecords(records);
+    } catch (err: any) {
+      addLog(`DNS Error: ${err.message}`, 'error');
+    } finally {
+      setDnsLoading(false);
+    }
+  };
+
+  const handleDeleteDnsRecord = async (recordId: string, recordName: string) => {
+    if (!zoneId) return;
+    setDnsLoading(true);
+    addLog(`Deleting record: ${recordName}...`, 'info');
+    try {
+      await fetchCF(`zones/${zoneId}/dns_records/${recordId}`, 'DELETE');
+      addLog(`Success: Deleted ${recordName}.`, 'success');
+      const records = await fetchCF(`zones/${zoneId}/dns_records`);
+      setDnsRecords(records);
+    } catch (err: any) {
+      addLog(`Delete Error: ${err.message}`, 'error');
+    } finally {
+      setDnsLoading(false);
     }
   };
 
   const handleApplyEdgeSettings = async () => {
     if (!zoneId) return;
     setLoading(true);
-    addLog(`Applying settings to ${selectedZoneName}...`, 'info');
+    addLog(`Applying edge settings to ${selectedZoneName}...`, 'info');
     try {
-      addLog(`Step 1: Setting Certificate Authority to "${caProvider}"...`, 'info');
-      await fetchCF(`zones/${zoneId}/ssl/universal/settings`, 'PATCH', { 
-        certificate_authority: caProvider 
-      });
-      
-      addLog(`Step 2: Setting SSL Encryption to "${sslMode}"...`, 'info');
+      await fetchCF(`zones/${zoneId}/ssl/universal/settings`, 'PATCH', { certificate_authority: caProvider });
       await fetchCF(`zones/${zoneId}/settings/ssl`, 'PATCH', { value: sslMode });
-      
-      addLog(`Success: Edge configuration synchronized for ${selectedZoneName}.`, 'success');
-      setStatus({ type: 'success', message: `CA Provider set to ${caProvider} and SSL to ${sslMode}. Cloudflare may take a few minutes to re-provision.` });
-      
-      // Refresh certificates list after a short delay
+      addLog(`Success: Configuration synced.`, 'success');
+      setStatus({ type: 'success', message: `CA Provider set to ${caProvider} and SSL to ${sslMode}.` });
       setTimeout(() => handleSelectZone(zoneId, selectedZoneName || ''), 2000);
     } catch (err: any) {
       addLog(`Provisioning Error: ${err.message}`, 'error');
@@ -276,13 +325,7 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <a 
-              href="https://github.com/LoveDoLove/ip6-arpa-dnsgen-autossl" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="size-10 flex items-center justify-center rounded-xl bg-slate-900 text-white hover:bg-indigo-600 transition-all shadow-md shadow-indigo-100/50 group"
-              title="View Repository"
-            >
+            <a href="https://github.com/LoveDoLove/ip6-arpa-dnsgen-autossl" target="_blank" rel="noopener noreferrer" className="size-10 flex items-center justify-center rounded-xl bg-slate-900 text-white hover:bg-indigo-600 transition-all shadow-md shadow-indigo-100/50 group">
               <Github className="size-5 group-hover:scale-110 transition-transform" />
             </a>
             <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 border border-slate-100 rounded-full">
@@ -291,6 +334,26 @@ export default function Home() {
             </div>
           </div>
         </header>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'Encryption', val: 'Full (Strict)', icon: Lock, color: 'text-indigo-500' },
+            { label: 'DNS Mapping', val: 'ip6.arpa', icon: Globe, color: 'text-blue-500' },
+            { label: 'Compute', val: 'Worker-Edge', icon: Cpu, color: 'text-emerald-500' },
+            { label: 'Traffic', val: 'Proxied', icon: Activity, color: 'text-orange-500' }
+          ].map((stat, i) => (
+            <div key={i} className="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex items-center gap-4">
+              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
+                <stat.icon className={`size-5 ${stat.color}`} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">{stat.label}</p>
+                <p className="text-sm font-bold text-slate-800 truncate">{stat.val}</p>
+              </div>
+            </div>
+          ))}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <section className="lg:col-span-4 space-y-6">
@@ -310,18 +373,19 @@ export default function Home() {
                     <label className="text-[11px] font-bold text-slate-500 flex items-center gap-2 uppercase"><Lock className="size-3" /> Global API Key</label>
                     <input type="password" placeholder="Enter API Key" className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all" value={globalKey} onChange={(e) => setGlobalKey(e.target.value)} />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 flex items-center gap-2 uppercase"><Hash className="size-3" /> Zone Identifier</label>
-                    <input type="text" placeholder="Auto-filled via Explorer" className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all" value={zoneId} onChange={(e) => setZoneId(e.target.value)} />
-                  </div>
                 </div>
-                
                 <button onClick={handleFetchAccounts} disabled={invLoading} className="btn btn-primary w-full rounded-xl shadow-lg shadow-indigo-100">
                   {invLoading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
                   Connect Explorer
                 </button>
               </div>
             </div>
+            {status && (
+              <div className={`p-4 rounded-2xl flex gap-3 animate-in fade-in slide-in-from-top-2 ${status.type === 'success' ? 'bg-emerald-50 border border-emerald-100 text-emerald-800' : 'bg-rose-50 border border-rose-100 text-rose-800'}`}>
+                {status.type === 'success' ? <CheckCircle2 className="size-5 shrink-0" /> : <ShieldAlert className="size-5 shrink-0" />}
+                <p className="text-[11px] font-medium leading-relaxed">{status.message}</p>
+              </div>
+            )}
           </section>
 
           <section className="lg:col-span-8 space-y-6">
@@ -352,7 +416,7 @@ export default function Home() {
                   <div className="size-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0"><Database className="size-5" /></div>
                   <div>
                     <h2 className="font-bold text-slate-800 text-base">Cloudflare Edge Explorer</h2>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Manage Domain Certificates & CA Providers</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Manage Domains, SSL & DNS Records</p>
                   </div>
                 </div>
 
@@ -370,55 +434,102 @@ export default function Home() {
                     </div>
 
                     <div className="space-y-3">
-                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2"><Globe className="size-3" /> 2. Select Domain</h3>
-                        <div className={`max-h-56 overflow-y-auto border border-slate-100 rounded-xl divide-y divide-slate-50 relative min-h-[100px] ${!selectedAccountId ? 'bg-slate-50/50' : ''}`}>
-                            {zoneLoading && <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10"><Loader2 className="size-5 animate-spin text-indigo-500" /></div>}
-                            {!selectedAccountId ? <div className="p-8 text-center text-[10px] text-slate-400 italic">Select an account first</div> : zones.length === 0 && !zoneLoading ? <div className="p-8 text-center text-[10px] text-slate-400 italic">No zones found</div> : zones.map(z => (
-                                <button key={z.id} onClick={() => handleSelectZone(z.id, z.name)} className={`w-full text-left p-3 flex items-center justify-between hover:bg-slate-50 transition-colors group ${zoneId === z.id ? 'bg-indigo-50 ring-1 ring-inset ring-indigo-200' : ''}`}>
-                                    <span className="text-xs font-bold text-indigo-600">{z.name}</span>
-                                    <ChevronRight className={`size-3 transition-transform ${zoneId === z.id ? 'translate-x-1 text-indigo-500' : 'text-slate-300'}`} />
+                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center justify-between"><span className="flex items-center gap-2"><Globe className="size-3" /> 2. Select Domain</span></h3>
+                        <div className={`flex flex-col border border-slate-100 rounded-xl overflow-hidden relative min-h-[100px] ${!selectedAccountId ? 'bg-slate-50/50' : ''}`}>
+                            {selectedAccountId && (
+                              <div className="p-3 bg-slate-50 border-b border-slate-100 flex gap-2">
+                                <input type="text" placeholder="new-domain.com" value={newDomainName} onChange={(e) => setNewDomainName(e.target.value)} className="input input-xs bg-white border-slate-200 focus:outline-none flex-1 rounded-lg text-[10px]" />
+                                <button onClick={handleAddDomain} disabled={addDomainLoading || !newDomainName} className="btn btn-xs btn-primary gap-1 rounded-lg">
+                                  {addDomainLoading ? <Loader2 className="size-2 animate-spin" /> : <PlusCircle className="size-2" />} Add
                                 </button>
-                            ))}
+                              </div>
+                            )}
+                            <div className="max-h-48 overflow-y-auto divide-y divide-slate-50">
+                              {zoneLoading && <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10"><Loader2 className="size-5 animate-spin text-indigo-500" /></div>}
+                              {!selectedAccountId ? <div className="p-8 text-center text-[10px] text-slate-400 italic">Select an account first</div> : zones.length === 0 && !zoneLoading ? <div className="p-8 text-center text-[10px] text-slate-400 italic">No zones found</div> : zones.map(z => (
+                                  <button key={z.id} onClick={() => handleSelectZone(z.id, z.name)} className={`w-full text-left p-3 flex items-center justify-between hover:bg-slate-50 transition-colors group ${zoneId === z.id ? 'bg-indigo-50 ring-1 ring-inset ring-indigo-200' : ''}`}>
+                                      <span className="text-xs font-bold text-indigo-600">{z.name}</span>
+                                      <ChevronRight className={`size-3 transition-transform ${zoneId === z.id ? 'translate-x-1 text-indigo-500' : 'text-slate-300'}`} />
+                                  </button>
+                              ))}
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {zoneId && (
-                <div className="mt-8 pt-8 border-t border-slate-100 animate-in fade-in zoom-in-95 duration-300">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="mt-8 space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                    {/* DNS Records Management Section */}
+                    <div className="border-t border-slate-100 pt-8">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2"><Save className="size-3" /> 3. DNS Records Management</h3>
+                            {dnsLoading && <Loader2 className="size-3 animate-spin text-indigo-500" />}
+                        </div>
+                        
+                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-4">
+                            {/* Create DNS Record Form */}
+                            <div className="grid grid-cols-1 sm:grid-cols-6 gap-2">
+                                <select value={newDns.type} onChange={e => setNewDns({...newDns, type: e.target.value})} className="select select-xs select-bordered bg-white rounded-lg sm:col-span-1 text-[10px] h-8 min-h-0">
+                                    <option>A</option><option>AAAA</option><option>CNAME</option><option>TXT</option><option>MX</option><option>NS</option>
+                                </select>
+                                <input type="text" placeholder="Name (@, www)" value={newDns.name} onChange={e => setNewDns({...newDns, name: e.target.value})} className="input input-xs input-bordered bg-white text-slate-900 rounded-lg text-[10px] h-8 min-h-0 sm:col-span-1" />
+                                <input type="text" placeholder="Content (IPv4, IPv6, value)" value={newDns.content} onChange={e => setNewDns({...newDns, content: e.target.value})} className="input input-xs input-bordered bg-white text-slate-900 rounded-lg text-[10px] h-8 min-h-0 sm:col-span-2" />
+                                <div className="flex items-center gap-2 sm:col-span-1 px-2">
+                                    <input type="checkbox" checked={newDns.proxied} onChange={e => setNewDns({...newDns, proxied: e.target.checked})} className="checkbox checkbox-xs checkbox-primary" />
+                                    <span className="text-[9px] font-bold text-slate-500">Proxied</span>
+                                </div>
+                                <button onClick={handleAddDnsRecord} disabled={dnsLoading} className="btn btn-xs btn-primary rounded-lg sm:col-span-1 gap-1 h-8 min-h-0">
+                                    <PlusCircle className="size-2.5" /> Create
+                                </button>
+                            </div>
+
+                            {/* DNS Records List */}
+                            <div className="max-h-64 overflow-y-auto border border-slate-200 rounded-xl bg-white overflow-hidden">
+                                <table className="table table-xs w-full">
+                                    <thead className="bg-slate-50">
+                                        <tr><th>Type</th><th>Name</th><th>Content</th><th>Proxy</th><th className="text-right">Action</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {dnsRecords.map(r => (
+                                            <tr key={r.id} className="hover:bg-slate-50/80">
+                                                <td className="font-bold text-indigo-500">{r.type}</td>
+                                                <td className="font-medium text-slate-700">{r.name}</td>
+                                                <td className="opacity-60 font-mono text-[9px] truncate max-w-[150px]">{r.content}</td>
+                                                <td>{r.proxied ? <div className="badge badge-warning badge-xs text-[8px] font-bold">YES</div> : <div className="badge badge-ghost badge-xs text-[8px] font-bold">NO</div>}</td>
+                                                <td className="text-right">
+                                                    <button onClick={() => handleDeleteDnsRecord(r.id, r.name)} className="btn btn-ghost btn-xs text-rose-500"><Trash2 className="size-3" /></button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {dnsRecords.length === 0 && !dnsLoading && <tr><td colSpan={5} className="text-center p-4 italic text-slate-400">No records found.</td></tr>}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8">
                       <div className="space-y-4">
-                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2"><ShieldAlert className="size-3" /> 3. Current Certificates</h3>
+                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2"><ShieldAlert className="size-3" /> 4. Current Certificates</h3>
                         <div className={`space-y-2 relative min-h-[100px] ${certLoading ? 'opacity-50' : ''}`}>
                           {certLoading && <Loader2 className="size-4 animate-spin text-indigo-500 absolute top-0 right-0" />}
-                          
-                          {/* Always show Universal SSL status if we have a CA Provider detected */}
                           {caProvider && (
                             <div className="p-3 bg-indigo-50/50 rounded-xl flex items-center justify-between border border-indigo-100 ring-1 ring-indigo-100">
-                                <div>
-                                    <p className="text-xs font-bold text-indigo-700">Universal SSL ({caProvider.toUpperCase()})</p>
-                                    <p className="text-[9px] text-indigo-500 italic">Managed automatically by Cloudflare</p>
-                                </div>
+                                <div><p className="text-xs font-bold text-indigo-700">Universal SSL ({caProvider.toUpperCase()})</p><p className="text-[9px] text-indigo-500 italic">Managed by Cloudflare</p></div>
                                 <div className="badge badge-xs font-bold badge-success">ACTIVE</div>
                             </div>
                           )}
-
                           {certs.map((c, i) => (
                               <div key={i} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between border border-slate-100">
-                                  <div>
-                                      <p className="text-xs font-bold text-slate-700 truncate max-w-[200px]">{c.hosts?.join(', ') || 'Global'}</p>
-                                      <p className="text-[9px] text-slate-500">
-                                        Type: {c.type} {c.certificate_authority ? `(${c.certificate_authority})` : ''}
-                                      </p>
-                                  </div>
+                                  <div><p className="text-xs font-bold text-slate-700 truncate max-w-[200px]">{c.hosts?.join(', ') || 'Global'}</p><p className="text-[9px] text-slate-500">Type: {c.type} {c.certificate_authority ? `(${c.certificate_authority})` : ''}</p></div>
                                   <div className={`badge badge-xs font-bold ${c.status === 'active' ? 'badge-success' : 'badge-warning'}`}>{c.status}</div>
                               </div>
                           ))}
-                          {certs.length === 0 && !caProvider && !certLoading && <p className="text-[10px] text-slate-400 italic text-center p-4">No edge certificates found.</p>}
                         </div>
                       </div>
 
                       <div className="space-y-4">
-                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2"><Award className="size-3" /> 4. Provisioning Settings</h3>
+                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2"><Award className="size-3" /> 5. Provisioning Settings</h3>
                         <div className="bg-slate-900 rounded-2xl p-5 shadow-xl space-y-5 border border-slate-800">
                           <div className="form-control">
                             <label className="label pt-0"><span className="label-text text-slate-400 text-[10px] font-bold uppercase tracking-widest">CA Provider</span></label>
@@ -429,20 +540,14 @@ export default function Home() {
                               <option value="digicert">DigiCert</option>
                             </select>
                           </div>
-                          
                           <div className="form-control">
                             <label className="label pt-0"><span className="label-text text-slate-400 text-[10px] font-bold uppercase tracking-widest">SSL Level</span></label>
                             <select className="select select-sm select-bordered w-full bg-slate-800 text-white border-slate-700 focus:outline-none" value={sslMode} onChange={(e) => setSslMode(e.target.value)}>
-                              <option value="off">Off</option>
-                              <option value="flexible">Flexible</option>
-                              <option value="full">Full</option>
-                              <option value="strict">Full (Strict)</option>
+                              <option value="off">Off</option><option value="flexible">Flexible</option><option value="full">Full</option><option value="strict">Full (Strict)</option>
                             </select>
                           </div>
-
                           <button onClick={handleApplyEdgeSettings} disabled={loading} className="btn btn-primary btn-sm w-full rounded-xl gap-2 shadow-lg shadow-indigo-900/40">
-                            {loading ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
-                            Apply Provisioning
+                            {loading ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />} Apply Provisioning
                           </button>
                         </div>
                       </div>
@@ -461,7 +566,7 @@ export default function Home() {
                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2 flex items-center gap-2"><Terminal className="size-3.5" /> Output Console</span>
                 </div>
               </div>
-              <div className="p-6 h-[220px] overflow-y-auto font-mono text-[11px] leading-relaxed space-y-2.5">
+              <div className="p-6 h-[220px] overflow-y-auto font-mono text-[11px] leading-relaxed space-y-2.5 custom-scrollbar">
                 {logs.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-slate-600 space-y-2 select-none">
                     <Activity className="size-8 opacity-10 animate-pulse" />
@@ -503,6 +608,12 @@ export default function Home() {
           </div>
         </footer>
       </div>
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.1); }
+      `}</style>
     </div>
   );
 }
