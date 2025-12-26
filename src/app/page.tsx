@@ -355,7 +355,7 @@ export default function App() {
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-950/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-950/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 hover:text-white active:text-white'}`}
             >
               <tab.icon className="size-4" /> {tab.label}
             </button>
@@ -378,7 +378,7 @@ export default function App() {
           </h2>
           <button 
             onClick={() => setIsConsoleOpen(!isConsoleOpen)}
-            className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border text-[10px] font-black uppercase transition-all shadow-sm ${isConsoleOpen ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-900'}`}
+            className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border text-[10px] font-black uppercase transition-all shadow-sm ${isConsoleOpen ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-900 active:bg-slate-50'}`}
           >
             <Terminal className="size-3.5" /> {isConsoleOpen ? 'Close Monitor' : 'Process Monitor'}
           </button>
@@ -404,8 +404,13 @@ export default function App() {
                       <label className="label py-1 px-1"><span className="label-text text-[10px] font-black uppercase text-slate-600 tracking-wide">Global API Key</span></label>
                       <input type="password" value={globalKey} onChange={(e) => setGlobalKey(e.target.value)} className="input input-md bg-slate-50 border-slate-200 w-full rounded-xl text-sm font-bold h-11 focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all" placeholder="••••••••••••••••••••••••" />
                     </div>
-                    <button onClick={handleFetchAccounts} disabled={invLoading} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-xs h-12 border-none mt-2 shadow-lg shadow-indigo-200 text-white hover:bg-indigo-700">
-                      {invLoading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />} Establish Session
+                    <button 
+                      onClick={handleFetchAccounts} 
+                      disabled={invLoading} 
+                      className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-xs h-12 border-none mt-2 shadow-lg shadow-indigo-200 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-slate-200 disabled:text-slate-400"
+                    >
+                      {invLoading ? <Loader2 className="size-4 animate-spin text-white" /> : <Search className="size-4 text-white" />} 
+                      <span className="text-white">Establish Session</span>
                     </button>
                   </div>
                 </div>
@@ -439,7 +444,7 @@ export default function App() {
 
             {/* View: Edge Manager */}
             {activeTab === 'edge' && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                   
                   <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl shadow-lg shadow-slate-200/40 flex flex-col overflow-hidden transition-all duration-500">
@@ -451,7 +456,7 @@ export default function App() {
                        {selectedAccountId && (
                           <div className="flex gap-2">
                             <input type="text" placeholder="Add domain.com..." value={newDomainName} onChange={(e) => setNewDomainName(e.target.value)} className="input input-sm bg-white border-slate-200 flex-1 rounded-xl text-[11px] font-bold h-11 focus:ring-4 focus:ring-indigo-50" />
-                            <button onClick={handleAddDomain} disabled={addDomainLoading} className="btn btn-md btn-primary rounded-xl h-11 px-4 border-none shadow-md text-white hover:bg-indigo-700">Add</button>
+                            <button onClick={handleAddDomain} disabled={addDomainLoading} className="btn btn-md btn-primary rounded-xl h-11 px-4 border-none shadow-md text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50">Add</button>
                           </div>
                        )}
                        <div className="max-h-[480px] overflow-y-auto space-y-2 custom-scrollbar-light pr-1">
@@ -494,7 +499,7 @@ export default function App() {
                                   </label>
                                 )}
                              </div>
-                             <button onClick={handleAddDnsRecord} disabled={dnsLoading} className="btn btn-md btn-primary h-11 font-black uppercase sm:col-span-1 rounded-xl border-none shadow-lg shadow-indigo-100 text-white hover:bg-indigo-700">Create</button>
+                             <button onClick={handleAddDnsRecord} disabled={dnsLoading} className="btn btn-md btn-primary h-11 font-black uppercase sm:col-span-1 rounded-xl border-none shadow-lg shadow-indigo-100 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50">Create</button>
                           </div>
 
                           <div className="max-h-80 overflow-auto border border-slate-200 rounded-2xl relative min-h-[180px] shadow-inner bg-white">
@@ -506,7 +511,7 @@ export default function App() {
                              ) : (
                                <table className="table table-xs w-full min-w-[600px] border-collapse">
                                   <thead className="bg-slate-100 text-slate-900 sticky top-0 z-10 shadow-sm">
-                                    <tr className="font-black text-[10px] uppercase tracking-widest border-b border-slate-200">
+                                    <tr className="font-black text-[10px] uppercase tracking-widest border-b border-slate-200 text-left">
                                       <th className="px-5 py-4 w-20">Type</th>
                                       <th className="px-5 py-4 w-32">Name</th>
                                       <th className="px-5 py-4">Content</th>
@@ -564,7 +569,7 @@ export default function App() {
                                       <option value="google">Google Trust Services</option><option value="lets_encrypt">Let's Encrypt</option><option value="ssl_com">SSL.com</option><option value="digicert">DigiCert</option>
                                     </select>
                                   </div>
-                                  <button onClick={handleApplyCA} disabled={caLoading} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-[10px] h-12 border-none shadow-lg shadow-indigo-950/50 text-white hover:bg-indigo-700">Update CA Provider</button>
+                                  <button onClick={handleApplyCA} disabled={caLoading} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-[10px] h-12 border-none shadow-lg shadow-indigo-950/50 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50">Update CA Provider</button>
                                 </>
                               )}
                            </div>
@@ -584,7 +589,7 @@ export default function App() {
                                       <option value="off">Off (Dev Only)</option><option value="flexible">Flexible</option><option value="full">Full</option><option value="strict">Full (Strict)</option>
                                     </select>
                                   </div>
-                                  <button onClick={handleApplySSL} disabled={sslLoading} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-[10px] h-12 border-none shadow-lg shadow-indigo-950/50 text-white hover:bg-indigo-700">Enforce Encryption</button>
+                                  <button onClick={handleApplySSL} disabled={sslLoading} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-[10px] h-12 border-none shadow-lg shadow-indigo-950/50 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50">Enforce Encryption</button>
                                 </>
                               )}
                            </div>
@@ -655,7 +660,7 @@ export default function App() {
                 <div className="grid grid-cols-2 gap-3 w-full pt-4">
                   <button 
                     onClick={() => setRecordToDelete(null)}
-                    className="btn btn-ghost rounded-2xl font-black uppercase text-[11px] tracking-widest h-12 hover:bg-slate-100 text-slate-600 hover:text-slate-900"
+                    className="btn btn-ghost rounded-2xl font-black uppercase text-[11px] tracking-widest h-12 hover:bg-slate-100 text-slate-600 hover:text-slate-900 active:bg-slate-200"
                   >
                     Cancel
                   </button>
@@ -681,7 +686,7 @@ export default function App() {
               </span>
               <button onClick={() => setIsConsoleOpen(false)} className="text-slate-500 hover:text-white p-1 transition-all hover:rotate-90 duration-300"><X className="size-5" /></button>
             </div>
-            <div className="flex-1 p-6 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-2 custom-scrollbar bg-slate-950/40">
+            <div className="flex-1 p-6 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-2 custom-scrollbar bg-slate-950/40 text-slate-300">
               {logs.map((log, i) => (
                 <div key={i} className="flex gap-6 group border-b border-white/[0.02] pb-2 hover:bg-white/[0.01] transition-colors">
                   <span className="text-slate-600 shrink-0 tabular-nums font-bold">[{log.time}]</span>
