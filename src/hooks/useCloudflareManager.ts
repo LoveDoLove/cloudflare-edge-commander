@@ -39,7 +39,6 @@ export function useCloudflareManager() {
 
   const logEndRef = useRef<HTMLDivElement>(null);
 
-  // Translation Dictionary
   const dict = {
     en: {
       core_services: "Core Services",
@@ -176,13 +175,13 @@ export function useCloudflareManager() {
     if (type === 'error' || type === 'success') setIsConsoleOpen(true);
   };
 
-  const fetchCF = async (endpoint: string, method = 'GET', body?: any) => {
+  const fetchCF = async (endpoint: string, method = 'GET', body?: any): Promise<any> => {
     const response = await fetch('/api/cloudflare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ endpoint, email: authEmail, key: globalKey, method, body })
     });
-    const data = await response.json();
+    const data = await response.json() as any;
     if (!data.success) throw new Error(data.errors?.[0]?.message || 'API Request Failed');
     return data.result;
   };
@@ -192,7 +191,7 @@ export function useCloudflareManager() {
     setLoadStates(s => ({ ...s, inv: true }));
     addLog('Syncing accounts...', 'info');
     try {
-      const data = await fetchCF('accounts');
+      const data = await fetchCF('accounts') as any[];
       setAccounts(data);
       addLog(t.success_acc.replace('{n}', data.length.toString()), 'success');
     } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
@@ -204,7 +203,7 @@ export function useCloudflareManager() {
     setZones([]); setLoadStates(s => ({ ...s, zone: true }));
     addLog(`Loading zones for ${accName}...`, 'info');
     try {
-      const data = await fetchCF(`zones?account.id=${accId}`);
+      const data = await fetchCF(`zones?account.id=${accId}`) as any[];
       setZones(data);
       addLog(t.found_zones.replace('{n}', data.length.toString()), 'success');
     } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
@@ -223,7 +222,7 @@ export function useCloudflareManager() {
         if (sslSettings?.value) setSslMode(sslSettings.value);
       } catch (e: any) {}
       try {
-        const records = await fetchCF(`zones/${id}/dns_records`);
+        const records = await fetchCF(`zones/${id}/dns_records`) as any[];
         setDnsRecords(records || []);
       } catch (e: any) {}
       addLog(t.sync_done, 'success');
@@ -239,7 +238,7 @@ export function useCloudflareManager() {
       await fetchCF(`zones/${zoneId}/dns_records`, 'POST', newDns);
       addLog(`Created: ${newDns.name}`, 'success');
       setNewDns({ type: 'A', name: '', content: '', ttl: 1, proxied: false });
-      const records = await fetchCF(`zones/${zoneId}/dns_records`);
+      const records = await fetchCF(`zones/${zoneId}/dns_records`) as any[];
       setDnsRecords(records);
     } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
     finally { setLoadStates(s => ({ ...s, dns: false })); }
@@ -252,7 +251,7 @@ export function useCloudflareManager() {
     try {
       await fetchCF(`zones/${zoneId}/dns_records/${recordToDelete.id}`, 'DELETE');
       addLog(t.update_done, 'success');
-      const records = await fetchCF(`zones/${zoneId}/dns_records`);
+      const records = await fetchCF(`zones/${zoneId}/dns_records`) as any[];
       setDnsRecords(records);
     } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
     finally { setLoadStates(s => ({ ...s, dns: false })); setRecordToDelete(null); }
@@ -267,7 +266,7 @@ export function useCloudflareManager() {
         type: editFormData.type, name: editFormData.name, content: editFormData.content, proxied: editFormData.proxied
       });
       addLog(t.update_done, 'success');
-      const records = await fetchCF(`zones/${zoneId}/dns_records`);
+      const records = await fetchCF(`zones/${zoneId}/dns_records`) as any[];
       setDnsRecords(records);
       setEditingRecordId(null); setEditFormData(null);
     } catch (err: any) { addLog(`Update Error: ${err.message}`, 'error'); } 
