@@ -26,7 +26,12 @@ export const AboutView = ({ lang }: { lang: 'en' | 'zh' }) => {
               </div>
             </div>
             <div className="flex gap-3">
-              <a href="https://github.com/LoveDoLove/cloudflare-edge-commander" target="_blank" className="btn btn-ghost bg-slate-50 hover:bg-slate-100 rounded-xl font-black uppercase text-[10px] h-12 px-5 border border-slate-200">
+              {/* Fixed text color for visibility on hover */}
+              <a 
+                href="https://github.com/LoveDoLove/cloudflare-edge-commander" 
+                target="_blank" 
+                className="btn btn-ghost bg-slate-50 hover:bg-slate-200 text-slate-900 rounded-xl font-black uppercase text-[10px] h-12 px-5 border border-slate-200 transition-all"
+              >
                 <Github className="size-4 mr-2" /> {isZh ? '项目源码' : 'Source Code'}
               </a>
             </div>
@@ -40,7 +45,7 @@ export const AboutView = ({ lang }: { lang: 'en' | 'zh' }) => {
                 </div>
                 <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 space-y-4">
                    <div className="flex items-center gap-4">
-                      <div className="size-12 rounded-full bg-slate-200 overflow-hidden">
+                      <div className="size-12 rounded-full bg-slate-200 overflow-hidden border border-slate-200">
                         <img src="https://github.com/LoveDoLove.png" alt="LoveDoLove" />
                       </div>
                       <div>
