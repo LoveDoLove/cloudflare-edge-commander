@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { 
-  ShieldCheck, LayoutDashboard, CloudCog, Network, Github, Terminal, X 
+  ShieldCheck, LayoutDashboard, CloudCog, Network, Github, Terminal, 
+  Lock, Scale, ChevronRight 
 } from 'lucide-react';
 
 // Relative imports for modular structure
@@ -10,6 +11,7 @@ import { useCloudflareManager } from '@/hooks/useCloudflareManager';
 import { ConnectivityView } from '@/components/views/ConnectivityView';
 import { EdgeManagerView } from '@/components/views/EdgeManagerView';
 import { NetworkLabView } from '@/components/views/NetworkLabView';
+import { PrivacyView, TermsView } from '@/components/views/LegalViews';
 import { DeleteConfirmationModal, ConsoleDrawer } from '@/components/Overlays';
 
 // Global utility for complex tasks (like ARPA mapping)
@@ -78,20 +80,40 @@ export default function App() {
           </div>
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-1">
-          {[
-            { id: 'auth', label: 'Connection', icon: LayoutDashboard },
-            { id: 'edge', label: 'Edge Manager', icon: CloudCog },
-            { id: 'utils', label: 'Network Lab', icon: Network }
-          ].map(tab => (
-            <button 
-              key={tab.id} onClick={() => state.setActiveTab(tab.id as any)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${state.activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-950/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white active:text-white'}`}
-            >
-              <tab.icon className="size-4" /> {tab.label}
-            </button>
-          ))}
-        </nav>
+        <div className="px-4 py-2">
+           <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-2">Core Services</p>
+           <nav className="space-y-1">
+            {[
+              { id: 'auth', label: 'Connection', icon: LayoutDashboard },
+              { id: 'edge', label: 'Edge Manager', icon: CloudCog },
+              { id: 'utils', label: 'Network Lab', icon: Network }
+            ].map(tab => (
+              <button 
+                key={tab.id} onClick={() => state.setActiveTab(tab.id as any)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${state.activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-950/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white active:text-white'}`}
+              >
+                <tab.icon className="size-4" /> {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="px-4 py-6 mt-4">
+           <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-2">Legal & Compliance</p>
+           <nav className="space-y-1">
+            {[
+              { id: 'privacy', label: 'Privacy Policy', icon: Lock },
+              { id: 'terms', label: 'Terms of Service', icon: Scale }
+            ].map(tab => (
+              <button 
+                key={tab.id} onClick={() => state.setActiveTab(tab.id as any)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${state.activeTab === tab.id ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                <tab.icon className="size-4" /> {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
 
         <div className="p-5 mt-auto border-t border-slate-800">
           <a href="https://github.com/LoveDoLove" target="_blank" className="flex items-center gap-2 text-[10px] font-bold text-slate-500 hover:text-white transition-colors">
@@ -104,7 +126,11 @@ export default function App() {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 shadow-sm">
           <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
-            {state.activeTab === 'auth' ? 'Connectivity & Access' : state.activeTab === 'edge' ? 'Infrastructure Management' : 'Network Intelligence Laboratory'}
+            {state.activeTab === 'auth' && 'Connectivity & Access'}
+            {state.activeTab === 'edge' && 'Infrastructure Management'}
+            {state.activeTab === 'utils' && 'Network Intelligence Laboratory'}
+            {state.activeTab === 'privacy' && 'Data Sovereignty'}
+            {state.activeTab === 'terms' && 'Service Agreement'}
           </h2>
           <button 
             onClick={() => state.setIsConsoleOpen(!state.isConsoleOpen)}
@@ -119,6 +145,8 @@ export default function App() {
             {state.activeTab === 'auth' && <ConnectivityView state={state} />}
             {state.activeTab === 'edge' && <EdgeManagerView state={state} />}
             {state.activeTab === 'utils' && <NetworkLabView state={state} utils={utils} />}
+            {state.activeTab === 'privacy' && <PrivacyView />}
+            {state.activeTab === 'terms' && <TermsView />}
           </div>
         </div>
 

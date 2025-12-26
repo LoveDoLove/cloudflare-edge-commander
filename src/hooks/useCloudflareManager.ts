@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 
 export function useCloudflareManager() {
-  const [activeTab, setActiveTab] = useState<'auth' | 'edge' | 'utils'>('auth');
+  // Extended activeTab to include legal pages
+  const [activeTab, setActiveTab] = useState<'auth' | 'edge' | 'utils' | 'privacy' | 'terms'>('auth');
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
   const [globalKey, setGlobalKey] = useState('');
