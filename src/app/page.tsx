@@ -20,7 +20,14 @@ import {
   RefreshCcw, 
   Heart, 
   FileText,
-  Github
+  Github,
+  Search,
+  Database,
+  ShieldAlert,
+  List,
+  ChevronRight,
+  Settings2,
+  Award
 } from 'lucide-react';
 
 /**
@@ -81,9 +88,24 @@ export default function Home() {
   const [globalKey, setGlobalKey] = useState('');
   const [zoneId, setZoneId] = useState('');
   const [ipv6Input, setIpv6Input] = useState('2001:db8::/32');
+  
   const [loading, setLoading] = useState(false);
+  const [invLoading, setInvLoading] = useState(false);
+  const [zoneLoading, setZoneLoading] = useState(false);
+  const [certLoading, setCertLoading] = useState(false);
+  
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [logs, setLogs] = useState<{ msg: string, type: string, time: string }[]>([]);
+  
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [zones, setZones] = useState<any[]>([]);
+  const [certs, setCerts] = useState<any[]>([]);
+  
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [selectedZoneName, setSelectedZoneName] = useState<string | null>(null);
+  const [caProvider, setCaProvider] = useState<string>('google');
+  const [sslMode, setSslMode] = useState<string>('strict');
+
   const logEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -94,6 +116,136 @@ export default function Home() {
     setLogs(prev => [...prev, { msg, type, time: new Date().toLocaleTimeString() }]);
   };
 
+  const fetchCF = async (endpoint: string, method = 'GET', body?: any) => {
+    const response = await fetch('/api/cloudflare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint,
+        email: authEmail,
+        key: globalKey,
+        method,
+        body
+      })
+    });
+    
+    const data = await response.json();
+    if (!data.success) {
+        throw new Error(data.errors?.[0]?.message || 'API Request Failed');
+    }
+    return data.result;
+  };
+
+  const handleFetchAccounts = async () => {
+    if (!authEmail || !globalKey) {
+      setStatus({ type: 'error', message: 'Email and API Key are required.' });
+      return;
+    }
+    setInvLoading(true);
+    setAccounts([]);
+    setZones([]);
+    setCerts([]);
+    setSelectedAccountId(null);
+    setZoneId('');
+    addLog('Fetching Cloudflare accounts...', 'info');
+    try {
+      const data = await fetchCF('accounts');
+      setAccounts(data);
+      addLog(`Success: Found ${data.length} accounts.`, 'success');
+    } catch (err: any) {
+      addLog(`Account Error: ${err.message}`, 'error');
+    } finally {
+      setInvLoading(false);
+    }
+  };
+
+  const handleSelectAccount = async (accId: string, accName: string) => {
+    setSelectedAccountId(accId);
+    setZones([]);
+    setCerts([]);
+    setZoneId('');
+    setZoneLoading(true);
+    addLog(`Fetching zones for account: ${accName}...`, 'info');
+    try {
+      const data = await fetchCF(`zones?account.id=${accId}`);
+      setZones(data);
+      addLog(`Success: Found ${data.length} zones in ${accName}.`, 'success');
+    } catch (err: any) {
+      addLog(`Zone Error: ${err.message}`, 'error');
+    } finally {
+      setZoneLoading(false);
+    }
+  };
+
+  const handleSelectZone = async (id: string, name: string) => {
+    setZoneId(id);
+    setSelectedZoneName(name);
+    setCerts([]);
+    setCertLoading(true);
+    addLog(`Domain selected: ${name}. Auto-fetching edge certificates & settings...`, 'info');
+    
+    try {
+      // 1. Universal SSL Settings
+      try {
+        const universalSettings = await fetchCF(`zones/${id}/ssl/universal/settings`);
+        if (universalSettings?.certificate_authority) {
+          setCaProvider(universalSettings.certificate_authority);
+          addLog(`Active CA Provider: ${universalSettings.certificate_authority}`, 'info');
+        }
+      } catch (e: any) {
+        addLog(`Could not fetch Universal SSL settings: ${e.message}`, 'error');
+      }
+
+      // 2. SSL Level Settings
+      try {
+        const sslSettings = await fetchCF(`zones/${id}/settings/ssl`);
+        if (sslSettings?.value) setSslMode(sslSettings.value);
+      } catch (e: any) {
+        addLog(`Could not fetch SSL level: ${e.message}`, 'error');
+      }
+
+      // 3. Certificate Packs
+      try {
+        const certPacks = await fetchCF(`zones/${id}/ssl/certificate_packs`);
+        setCerts(certPacks || []);
+      } catch (e: any) {
+        addLog(`Could not fetch certificate packs: ${e.message}`, 'error');
+      }
+      
+      addLog(`Domain sync completed for ${name}.`, 'success');
+    } catch (err: any) {
+      addLog(`General Zone Data Error: ${err.message}`, 'error');
+    } finally {
+      setCertLoading(false);
+    }
+  };
+
+  const handleApplyEdgeSettings = async () => {
+    if (!zoneId) return;
+    setLoading(true);
+    addLog(`Applying settings to ${selectedZoneName}...`, 'info');
+    try {
+      addLog(`Step 1: Setting Certificate Authority to "${caProvider}"...`, 'info');
+      await fetchCF(`zones/${zoneId}/ssl/universal/settings`, 'PATCH', { 
+        certificate_authority: caProvider 
+      });
+      
+      addLog(`Step 2: Setting SSL Encryption to "${sslMode}"...`, 'info');
+      await fetchCF(`zones/${zoneId}/settings/ssl`, 'PATCH', { value: sslMode });
+      
+      addLog(`Success: Edge configuration synchronized for ${selectedZoneName}.`, 'success');
+      setStatus({ type: 'success', message: `CA Provider set to ${caProvider} and SSL to ${sslMode}. Cloudflare may take a few minutes to re-provision.` });
+      
+      // Refresh certificates list after a short delay
+      setTimeout(() => handleSelectZone(zoneId, selectedZoneName || ''), 2000);
+    } catch (err: any) {
+      addLog(`Provisioning Error: ${err.message}`, 'error');
+      setStatus({ type: 'error', message: `Provisioning failed: ${err.message}` });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGenerate = () => {
     const randomIp = generateRandomIPv6(ipv6Input);
     const resultArpa = ipv6ToArpa(randomIp);
@@ -101,30 +253,6 @@ export default function Home() {
     addLog(`Using Prefix: ${ipv6Input}`, 'info');
     addLog(`Generated IP: ${randomIp}`, 'success');
     addLog(`Arpa Record: ${resultArpa}`, 'success');
-  };
-
-  const handleApplySSL = async () => {
-    if (!authEmail || !globalKey || !zoneId) {
-      setStatus({ type: 'error', message: 'Credentials required.' });
-      return;
-    }
-    setLoading(true);
-    setStatus(null);
-    setLogs([]);
-    addLog('Establishing Cloudflare API session...', 'info');
-    try {
-      addLog(`Validating Zone ID: ${zoneId.substring(0,8)}...`, 'info');
-      await new Promise(r => setTimeout(r, 800));
-      addLog('Enforcing Full (Strict) SSL encryption...', 'success');
-      await new Promise(r => setTimeout(r, 1000));
-      setStatus({ type: 'success', message: 'Cloudflare configuration successfully updated.' });
-      addLog('Process complete.', 'success');
-    } catch (err: any) {
-      addLog('Error: ' + err.message, 'error');
-      setStatus({ type: 'error', message: 'Update failed.' });
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -164,26 +292,6 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: 'Encryption', val: 'Full (Strict)', icon: Lock, color: 'text-indigo-500' },
-            { label: 'DNS Mapping', val: 'ip6.arpa', icon: Globe, color: 'text-blue-500' },
-            { label: 'Compute', val: 'Worker-Edge', icon: Cpu, color: 'text-emerald-500' },
-            { label: 'Traffic', val: 'Proxied', icon: Activity, color: 'text-orange-500' }
-          ].map((stat, i) => (
-            <div key={i} className="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex items-center gap-4">
-              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                <stat.icon className={`size-5 ${stat.color}`} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">{stat.label}</p>
-                <p className="text-sm font-bold text-slate-800 truncate">{stat.val}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <section className="lg:col-span-4 space-y-6">
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
@@ -204,11 +312,13 @@ export default function Home() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-slate-500 flex items-center gap-2 uppercase"><Hash className="size-3" /> Zone Identifier</label>
-                    <input type="text" placeholder="Target Zone ID" className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all" value={zoneId} onChange={(e) => setZoneId(e.target.value)} />
+                    <input type="text" placeholder="Auto-filled via Explorer" className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all" value={zoneId} onChange={(e) => setZoneId(e.target.value)} />
                   </div>
                 </div>
-                <button onClick={handleApplySSL} disabled={loading} className="w-full h-12 bg-slate-900 hover:bg-indigo-600 text-white font-bold text-xs uppercase tracking-widest rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
-                  {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCcw className="size-4" />} Apply Edge Config
+                
+                <button onClick={handleFetchAccounts} disabled={invLoading} className="btn btn-primary w-full rounded-xl shadow-lg shadow-indigo-100">
+                  {invLoading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+                  Connect Explorer
                 </button>
               </div>
             </div>
@@ -234,6 +344,116 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Cloudflare Explorer Wizard */}
+            {accounts.length > 0 && (
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-4">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="size-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0"><Database className="size-5" /></div>
+                  <div>
+                    <h2 className="font-bold text-slate-800 text-base">Cloudflare Edge Explorer</h2>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Manage Domain Certificates & CA Providers</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2"><List className="size-3" /> 1. Select Account</h3>
+                        <div className="max-h-56 overflow-y-auto border border-slate-100 rounded-xl divide-y divide-slate-50">
+                            {accounts.map(acc => (
+                                <button key={acc.id} onClick={() => handleSelectAccount(acc.id, acc.name)} className={`w-full text-left p-3 flex items-center justify-between hover:bg-slate-50 transition-colors group ${selectedAccountId === acc.id ? 'bg-indigo-50 ring-1 ring-inset ring-indigo-200' : ''}`}>
+                                    <div><p className="text-xs font-bold text-slate-700">{acc.name}</p><p className="text-[9px] opacity-40 font-mono truncate max-w-[150px]">{acc.id}</p></div>
+                                    <ChevronRight className={`size-3 transition-transform ${selectedAccountId === acc.id ? 'translate-x-1 text-indigo-500' : 'text-slate-300'}`} />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2"><Globe className="size-3" /> 2. Select Domain</h3>
+                        <div className={`max-h-56 overflow-y-auto border border-slate-100 rounded-xl divide-y divide-slate-50 relative min-h-[100px] ${!selectedAccountId ? 'bg-slate-50/50' : ''}`}>
+                            {zoneLoading && <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10"><Loader2 className="size-5 animate-spin text-indigo-500" /></div>}
+                            {!selectedAccountId ? <div className="p-8 text-center text-[10px] text-slate-400 italic">Select an account first</div> : zones.length === 0 && !zoneLoading ? <div className="p-8 text-center text-[10px] text-slate-400 italic">No zones found</div> : zones.map(z => (
+                                <button key={z.id} onClick={() => handleSelectZone(z.id, z.name)} className={`w-full text-left p-3 flex items-center justify-between hover:bg-slate-50 transition-colors group ${zoneId === z.id ? 'bg-indigo-50 ring-1 ring-inset ring-indigo-200' : ''}`}>
+                                    <span className="text-xs font-bold text-indigo-600">{z.name}</span>
+                                    <ChevronRight className={`size-3 transition-transform ${zoneId === z.id ? 'translate-x-1 text-indigo-500' : 'text-slate-300'}`} />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {zoneId && (
+                <div className="mt-8 pt-8 border-t border-slate-100 animate-in fade-in zoom-in-95 duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-4">
+                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2"><ShieldAlert className="size-3" /> 3. Current Certificates</h3>
+                        <div className={`space-y-2 relative min-h-[100px] ${certLoading ? 'opacity-50' : ''}`}>
+                          {certLoading && <Loader2 className="size-4 animate-spin text-indigo-500 absolute top-0 right-0" />}
+                          
+                          {/* Always show Universal SSL status if we have a CA Provider detected */}
+                          {caProvider && (
+                            <div className="p-3 bg-indigo-50/50 rounded-xl flex items-center justify-between border border-indigo-100 ring-1 ring-indigo-100">
+                                <div>
+                                    <p className="text-xs font-bold text-indigo-700">Universal SSL ({caProvider.toUpperCase()})</p>
+                                    <p className="text-[9px] text-indigo-500 italic">Managed automatically by Cloudflare</p>
+                                </div>
+                                <div className="badge badge-xs font-bold badge-success">ACTIVE</div>
+                            </div>
+                          )}
+
+                          {certs.map((c, i) => (
+                              <div key={i} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between border border-slate-100">
+                                  <div>
+                                      <p className="text-xs font-bold text-slate-700 truncate max-w-[200px]">{c.hosts?.join(', ') || 'Global'}</p>
+                                      <p className="text-[9px] text-slate-500">
+                                        Type: {c.type} {c.certificate_authority ? `(${c.certificate_authority})` : ''}
+                                      </p>
+                                  </div>
+                                  <div className={`badge badge-xs font-bold ${c.status === 'active' ? 'badge-success' : 'badge-warning'}`}>{c.status}</div>
+                              </div>
+                          ))}
+                          {certs.length === 0 && !caProvider && !certLoading && <p className="text-[10px] text-slate-400 italic text-center p-4">No edge certificates found.</p>}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2"><Award className="size-3" /> 4. Provisioning Settings</h3>
+                        <div className="bg-slate-900 rounded-2xl p-5 shadow-xl space-y-5 border border-slate-800">
+                          <div className="form-control">
+                            <label className="label pt-0"><span className="label-text text-slate-400 text-[10px] font-bold uppercase tracking-widest">CA Provider</span></label>
+                            <select className="select select-sm select-bordered w-full bg-slate-800 text-white border-slate-700 focus:outline-none" value={caProvider} onChange={(e) => setCaProvider(e.target.value)}>
+                              <option value="google">Google Trust Services</option>
+                              <option value="lets_encrypt">Let's Encrypt</option>
+                              <option value="ssl_com">SSL.com</option>
+                              <option value="digicert">DigiCert</option>
+                            </select>
+                          </div>
+                          
+                          <div className="form-control">
+                            <label className="label pt-0"><span className="label-text text-slate-400 text-[10px] font-bold uppercase tracking-widest">SSL Level</span></label>
+                            <select className="select select-sm select-bordered w-full bg-slate-800 text-white border-slate-700 focus:outline-none" value={sslMode} onChange={(e) => setSslMode(e.target.value)}>
+                              <option value="off">Off</option>
+                              <option value="flexible">Flexible</option>
+                              <option value="full">Full</option>
+                              <option value="strict">Full (Strict)</option>
+                            </select>
+                          </div>
+
+                          <button onClick={handleApplyEdgeSettings} disabled={loading} className="btn btn-primary btn-sm w-full rounded-xl gap-2 shadow-lg shadow-indigo-900/40">
+                            {loading ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
+                            Apply Provisioning
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+                )}
+              </div>
+            </div>
+            )}
+
+            {/* Terminal */}
             <div className="bg-[#0F172A] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
               <div className="bg-slate-800/50 px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -241,7 +461,7 @@ export default function Home() {
                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2 flex items-center gap-2"><Terminal className="size-3.5" /> Output Console</span>
                 </div>
               </div>
-              <div className="p-6 h-[280px] overflow-y-auto font-mono text-[11px] leading-relaxed space-y-2.5">
+              <div className="p-6 h-[220px] overflow-y-auto font-mono text-[11px] leading-relaxed space-y-2.5">
                 {logs.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-slate-600 space-y-2 select-none">
                     <Activity className="size-8 opacity-10 animate-pulse" />
@@ -262,24 +482,12 @@ export default function Home() {
           </section>
         </div>
 
-        {/* Updated Footer with Links */}
         <footer className="pt-10 pb-6 border-t border-slate-200">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 px-2">
             <div className="flex gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest items-center">
-              <a href="/terms" className="hover:text-indigo-500 transition-colors flex items-center gap-1.5">
-                <FileText className="size-3" /> Terms
-              </a>
-              <a href="/privacy" className="hover:text-indigo-500 transition-colors flex items-center gap-1.5">
-                <ShieldCheck className="size-3" /> Privacy
-              </a>
-              <a 
-                href="https://github.com/LoveDoLove/ip6-arpa-dnsgen-autossl" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="hover:text-indigo-500 transition-colors flex items-center gap-1.5"
-              >
-                <Github className="size-3" /> Repository
-              </a>
+              <a href="/terms" className="hover:text-indigo-500 transition-colors flex items-center gap-1.5"><FileText className="size-3" /> Terms</a>
+              <a href="/privacy" className="hover:text-indigo-500 transition-colors flex items-center gap-1.5"><ShieldCheck className="size-3" /> Privacy</a>
+              <a href="https://github.com/LoveDoLove/ip6-arpa-dnsgen-autossl" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-500 transition-colors flex items-center gap-1.5"><Github className="size-3" /> Repository</a>
               <span className="opacity-20">|</span>
               <span>Next.js 16</span>
               <span>Tailwind 4</span>
@@ -288,14 +496,7 @@ export default function Home() {
               <span>Made with</span>
               <Heart className="size-3 text-rose-500 fill-rose-500" />
               <span>by </span>
-              <a 
-                href="https://github.com/LoveDoLove" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="hover:text-indigo-500 transition-colors font-bold"
-              >
-                LoveDoLove
-              </a>
+              <a href="https://github.com/LoveDoLove" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-500 transition-colors font-bold">LoveDoLove</a>
               <span className="mx-2 opacity-30">|</span>
               <span>© {new Date().getFullYear()}</span>
             </div>
