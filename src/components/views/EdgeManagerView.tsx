@@ -1,0 +1,114 @@
+"use client";
+
+import React from 'react';
+import { Globe, PlusCircle, ChevronRight, Loader2, Edit3, Trash2, Check, X, Award, Shield, CloudCog } from 'lucide-react';
+
+const DNS_TYPES = [
+  'A', 'AAAA', 'CAA', 'CERT', 'CNAME', 'DNSKEY', 'DS', 'HTTPS', 
+  'LOC', 'MX', 'NAPTR', 'NS', 'PTR', 'SMIMEA', 'SRV', 'SSHFP', 
+  'SVCB', 'TLSA', 'TXT', 'URI'
+];
+
+const canBeProxied = (type: string) => ['A', 'AAAA', 'CNAME'].includes(type);
+
+export const EdgeManagerView = ({ state }: { state: any }) => (
+  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-in fade-in slide-in-from-bottom-4 duration-500">
+    {/* Registry Sidebar */}
+    <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl shadow-lg shadow-slate-200/40 flex flex-col overflow-hidden transition-all duration-500">
+      <div className="p-5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+        <h3 className="text-[10px] font-black uppercase text-slate-700 tracking-[0.15em]">Zone Registry</h3>
+        <span className="badge badge-sm font-black text-[10px] bg-slate-200 border-none text-slate-600 px-3">{state.zones.length}</span>
+      </div>
+      <div className="p-5 space-y-5">
+         {state.selectedAccountId && (
+            <div className="flex gap-2">
+              <input type="text" placeholder="Add domain.com..." value={state.newDomainName} onChange={(e) => state.setNewDomainName(e.target.value)} className="input input-sm bg-white border-slate-200 flex-1 rounded-xl text-[11px] font-bold h-11 focus:ring-4 focus:ring-indigo-50 shadow-sm" />
+              <button disabled={state.loadStates.addDomain} className="btn btn-md btn-primary rounded-xl h-11 px-4 border-none shadow-md text-white hover:bg-indigo-700">Add</button>
+            </div>
+         )}
+         <div className="max-h-[480px] overflow-y-auto space-y-2 custom-scrollbar-light pr-1">
+            {!state.selectedAccountId ? <div className="p-20 text-center text-[10px] text-slate-400 font-black uppercase opacity-50">Select Account</div> : state.zones.map((z: any) => (
+              <button key={z.id} onClick={() => state.handleSelectZone(z.id, z.name)} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center justify-between group transition-all border duration-300 ${state.zoneId === z.id ? 'bg-indigo-600 text-white border-indigo-500 shadow-xl shadow-indigo-100 scale-[1.02]' : 'bg-white border-slate-100 hover:border-indigo-200 hover:bg-slate-50 text-slate-800'}`}>
+                  <span className="text-[12px] font-black truncate flex-1 pr-4">{z.name}</span>
+                  <ChevronRight className={`size-4 transition-transform ${state.zoneId === z.id ? 'translate-x-0' : 'translate-x-[-4px] opacity-0 group-hover:opacity-100'}`} />
+              </button>
+            ))}
+         </div>
+      </div>
+    </div>
+
+    {/* Main Config Area */}
+    <div className="lg:col-span-8 space-y-8">
+      {state.zoneId ? (
+        <>
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-8 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-50 pb-4">
+               <div className="flex items-center gap-4"><div className="size-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner"><Globe className="size-7" /></div><div><h3 className="text-base font-black text-slate-900 tracking-tight uppercase">Distributed DNS Registry</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Zone: {state.selectedZoneName}</p></div></div>
+               {state.loadStates.dns && <Loader2 className="size-5 animate-spin text-indigo-600" />}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-inner">
+               <select value={state.newDns.type} onChange={e => { const type = e.target.value; state.setNewDns({...state.newDns, type, proxied: canBeProxied(type) ? state.newDns.proxied : false}); }} className="select select-sm select-bordered bg-white font-black h-11 text-[11px] sm:col-span-1 rounded-xl focus:outline-none shadow-sm">{DNS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select>
+               <input type="text" placeholder="Name" value={state.newDns.name} onChange={e => state.setNewDns({...state.newDns, name: e.target.value})} className="input input-sm bg-white border-slate-200 h-11 text-[11px] font-black sm:col-span-1 rounded-xl focus:ring-4 focus:ring-indigo-100 shadow-sm" />
+               <input type="text" placeholder="Content" value={state.newDns.content} onChange={e => state.setNewDns({...state.newDns, content: e.target.value})} className="input input-sm bg-white border-slate-200 h-11 text-[11px] font-black sm:col-span-2 rounded-xl focus:ring-4 focus:ring-indigo-100 shadow-sm" />
+               <div className="flex items-center justify-center sm:col-span-1">{canBeProxied(state.newDns.type) && <label className="flex items-center gap-2 cursor-pointer select-none group"><input type="checkbox" checked={state.newDns.proxied} onChange={e => state.setNewDns({...state.newDns, proxied: e.target.checked})} className="checkbox checkbox-sm checkbox-primary rounded-lg border-2 transition-all shadow-sm" /><span className="text-[10px] font-black text-slate-600 uppercase group-hover:text-indigo-600">Proxy</span></label>}</div>
+               <button onClick={state.handleAddDnsRecord} disabled={state.loadStates.dns} className="btn btn-md btn-primary h-11 font-black uppercase rounded-xl border-none shadow-lg shadow-indigo-100 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50">Create</button>
+            </div>
+            <div className="max-h-80 overflow-auto border border-slate-200 rounded-2xl relative min-h-[180px] shadow-inner bg-white">
+               {state.loadStates.dns ? (
+                 <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 gap-3"><span className="loading loading-spinner loading-lg text-indigo-600"></span><p className="text-[10px] font-black uppercase text-indigo-900 tracking-[0.2em] animate-pulse">Syncing DNS Records...</p></div>
+               ) : (
+                 <table className="table table-xs w-full min-w-[600px] border-collapse text-left">
+                    <thead className="bg-slate-100 text-slate-900 sticky top-0 z-10 shadow-sm"><tr className="font-black text-[10px] uppercase tracking-widest border-b border-slate-200"><th className="px-5 py-4 w-20">Type</th><th className="px-5 py-4 w-32">Name</th><th className="px-5 py-4">Content</th><th className="px-5 py-4 text-center w-20">Proxy</th><th className="px-5 py-4 text-right w-32">Action</th></tr></thead>
+                    <tbody>
+                      {state.dnsRecords.map((r: any) => (
+                        <tr key={r.id} className={`hover:bg-indigo-50/50 border-b border-slate-100 last:border-0 transition-colors ${state.editingRecordId === r.id ? 'bg-amber-50/30' : ''}`}>
+                          {state.editingRecordId === r.id ? (
+                            <>
+                              <td className="px-2 py-2"><select value={state.editFormData.type} onChange={e => state.setEditFormData({...state.editFormData, type: e.target.value, proxied: canBeProxied(e.target.value) ? state.editFormData.proxied : false})} className="select select-xs select-bordered w-full bg-white font-bold h-9 text-[10px] rounded-lg shadow-sm">{DNS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select></td>
+                              <td className="px-2 py-2"><input type="text" value={state.editFormData.name} onChange={e => state.setEditFormData({...state.editFormData, name: e.target.value})} className="input input-xs input-bordered w-full font-bold h-9 text-[10px] rounded-lg shadow-sm" /></td>
+                              <td className="px-2 py-2"><input type="text" value={state.editFormData.content} onChange={e => state.setEditFormData({...state.editFormData, content: e.target.value})} className="input input-xs input-bordered w-full font-bold h-9 text-[10px] rounded-lg shadow-sm" /></td>
+                              <td className="px-2 py-2 text-center">{canBeProxied(state.editFormData.type) ? <button onClick={() => state.setEditFormData({...state.editFormData, proxied: !state.editFormData.proxied})} className={`size-6 mx-auto rounded-full border-2 border-white shadow-sm transition-all flex items-center justify-center ${state.editFormData.proxied ? 'bg-orange-400' : 'bg-slate-200'}`} title={state.editFormData.proxied ? "Proxied Status ON" : "Proxied Status OFF"}><div className={`size-1.5 rounded-full bg-white transition-transform ${state.editFormData.proxied ? 'scale-110' : 'scale-75 opacity-40'}`} /></button> : <span className="text-[8px] font-black text-slate-300 uppercase">N/A</span>}</td>
+                              <td className="px-2 py-2 text-right"><div className="flex items-center justify-end gap-1.5 pt-1"><button onClick={state.handleSaveEdit} className="btn btn-xs bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm text-white px-2 border-none"><Check className="size-3.5" /></button><button onClick={() => state.setEditingRecordId(null)} className="btn btn-xs btn-ghost bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 px-2"><X className="size-3.5" /></button></div></td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="px-5 py-4 font-black text-indigo-700 text-[11px]">{r.type}</td>
+                              <td className="px-5 py-4 font-bold text-slate-900 text-[11px] truncate max-w-[120px]">{r.name}</td>
+                              <td className="px-5 py-4 text-[10px] font-mono text-slate-600 break-all">{r.content}</td>
+                              <td className="px-5 py-4 text-center">{r.proxied ? <div className="size-3 mx-auto rounded-full bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.4)] border-2 border-white" title="Proxied" /> : <div className="size-3 mx-auto rounded-full bg-slate-200 border-2 border-white" title="DNS Only" />}</td>
+                              <td className="px-5 py-4 text-right"><div className="flex items-center justify-end gap-2"><button onClick={() => { state.setEditingRecordId(r.id); state.setEditFormData({...r}); }} className="btn btn-ghost btn-xs text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="Edit Record"><Edit3 className="size-4" /></button><button onClick={() => state.setRecordToDelete(r)} className="btn btn-ghost btn-xs text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all" title="Delete Record"><Trash2 className="size-4" /></button></div></td>
+                            </>
+                          )}
+                        </tr>
+                      ))}
+                      {state.dnsRecords.length === 0 && !state.loadStates.dns && (<tr><td colSpan={5} className="py-12 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Registry Empty</td></tr>)}
+                    </tbody>
+                 </table>
+               )}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="bg-slate-900 rounded-2xl p-7 shadow-2xl shadow-slate-900/40 space-y-6 flex flex-col min-h-[220px] relative overflow-hidden text-white">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/5 blur-3xl rounded-full" />
+                <div className="flex items-center gap-3 relative z-10"><div className="size-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20 shadow-inner"><Award className="size-5" /></div><h3 className="font-black text-white text-sm tracking-widest uppercase">CA Deployment</h3></div>
+                {state.loadStates.cert ? <div className="flex-1 flex flex-col items-center justify-center gap-3"><span className="loading loading-spinner loading-lg text-indigo-500"></span></div> : <>
+                    <div className="form-control flex-1"><label className="label py-1.5"><span className="label-text text-slate-400 text-[10px] font-black uppercase tracking-widest">Authority</span></label><select value={state.caProvider} onChange={(e) => state.setCaProvider(e.target.value)} className="select select-sm bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-11 focus:ring-2 focus:ring-indigo-500/40 outline-none shadow-inner"><option value="google">Google Trust</option><option value="lets_encrypt">Let's Encrypt</option><option value="ssl_com">SSL.com</option><option value="digicert">DigiCert</option></select></div>
+                    <button onClick={state.handleApplyCA} disabled={state.loadStates.ca} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-[10px] h-12 text-white hover:bg-indigo-700">Update CA</button>
+                  </>}
+             </div>
+             <div className="bg-slate-900 rounded-2xl p-7 shadow-2xl shadow-slate-900/40 space-y-6 flex flex-col min-h-[220px] relative overflow-hidden text-white">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full" />
+                <div className="flex items-center gap-3 relative z-10"><div className="size-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20 shadow-inner"><Shield className="size-5" /></div><h3 className="font-black text-white text-sm tracking-widest uppercase">Encryption Layer</h3></div>
+                {state.loadStates.cert ? <div className="flex-1 flex flex-col items-center justify-center gap-3"><span className="loading loading-spinner loading-lg text-indigo-500"></span></div> : <>
+                    <div className="form-control flex-1"><label className="label py-1.5"><span className="label-text text-slate-400 text-[10px] font-black uppercase tracking-widest">Security Level</span></label><select value={state.sslMode} onChange={(e) => state.setSslMode(e.target.value)} className="select select-sm bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-11 focus:ring-2 focus:ring-indigo-500/40 outline-none shadow-inner"><option value="off">Off (Dev Only)</option><option value="flexible">Flexible</option><option value="full">Full</option><option value="strict">Full (Strict)</option></select></div>
+                    <button onClick={state.handleApplySSL} disabled={state.loadStates.ssl} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-[10px] h-12 text-white hover:bg-indigo-700">Enforce Encryption</button>
+                  </>}
+             </div>
+          </div>
+        </>
+      ) : (
+        <div className="h-full min-h-[400px] bg-white border border-slate-200 border-dashed rounded-3xl flex flex-col items-center justify-center p-16 text-center opacity-50 shadow-inner"><CloudCog className="size-10 text-slate-300 mb-4 animate-pulse" /><h3 className="text-[11px] font-black uppercase tracking-widest text-slate-500">Initialize Zone Context</h3></div>
+      )}
+    </div>
+  </div>
+);
