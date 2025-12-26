@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
+ * Interface for the expected request body
+ */
+interface ProxyRequestBody {
+  endpoint: string;
+  email: string;
+  key: string;
+  method?: string;
+  body?: any;
+}
+
+/**
  * Next.js API Route - Cloudflare Proxy
  * This runs on the server side (Cloudflare Workers/Pages) to bypass CORS
  * and keep API calls secure.
  */
 export async function POST(req: NextRequest) {
   try {
-    const { endpoint, email, key, method = 'GET', body } = await req.json();
+    // Explicitly cast the JSON body to our interface to satisfy TypeScript
+    const data = await req.json() as ProxyRequestBody;
+    const { endpoint, email, key, method = 'GET', body } = data;
 
     if (!endpoint || !email || !key) {
       return NextResponse.json(
@@ -26,10 +39,10 @@ export async function POST(req: NextRequest) {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    const data = await cfResponse.json();
+    const responseData = await cfResponse.json();
     
     // Return the Cloudflare response directly to the client
-    return NextResponse.json(data, { status: cfResponse.status });
+    return NextResponse.json(responseData, { status: cfResponse.status });
   } catch (error: any) {
     console.error('Proxy Error:', error);
     return NextResponse.json(
