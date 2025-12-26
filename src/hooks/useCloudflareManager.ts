@@ -6,9 +6,12 @@ export type Language = 'en' | 'zh';
 
 export function useCloudflareManager() {
   const [lang, setLang] = useState<Language>('en');
-  // Restored individual tabs for specific views
   const [activeTab, setActiveTab] = useState<'auth' | 'edge' | 'utils' | 'docs' | 'about' | 'privacy' | 'terms'>('auth');
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
+  
+  // New: State for drawer height to allow persistence
+  const [consoleHeight, setConsoleHeight] = useState(280);
+
   const [authEmail, setAuthEmail] = useState('');
   const [globalKey, setGlobalKey] = useState('');
   const [zoneId, setZoneId] = useState('');
@@ -179,9 +182,9 @@ export function useCloudflareManager() {
     if (isConsoleOpen) { logEndRef.current?.scrollIntoView({ behavior: "smooth" }); }
   }, [logs, isConsoleOpen]);
 
+  // UX Fix: Removed the auto-setIsConsoleOpen call to prevent annoying popups
   const addLog = (msg: string, type = 'info') => {
     setLogs(prev => [...prev, { msg, type, time: new Date().toLocaleTimeString() }]);
-    if (type === 'error' || type === 'success') setIsConsoleOpen(true);
   };
 
   const fetchCF = async (endpoint: string, method = 'GET', body?: any): Promise<any> => {
@@ -322,6 +325,7 @@ export function useCloudflareManager() {
   return {
     lang, setLang, t,
     activeTab, setActiveTab, isConsoleOpen, setIsConsoleOpen,
+    consoleHeight, setConsoleHeight, // Persistent height
     authEmail, setAuthEmail, globalKey, setGlobalKey, handleFetchAccounts,
     accounts, selectedAccountId, handleSelectAccount,
     zones, zoneId, selectedZoneName, handleSelectZone,
