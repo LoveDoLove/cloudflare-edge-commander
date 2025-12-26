@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Github, ExternalLink, User, Globe, Info, Heart } from 'lucide-react';
+import { Github, ExternalLink, User, Globe, Info, Heart, Scale } from 'lucide-react';
 
 export const AboutView = ({ lang }: { lang: 'en' | 'zh' }) => {
   const isZh = lang === 'zh';
@@ -26,7 +26,6 @@ export const AboutView = ({ lang }: { lang: 'en' | 'zh' }) => {
               </div>
             </div>
             <div className="flex gap-3">
-              {/* Fixed text color for visibility on hover */}
               <a 
                 href="https://github.com/LoveDoLove/cloudflare-edge-commander" 
                 target="_blank" 
@@ -37,13 +36,14 @@ export const AboutView = ({ lang }: { lang: 'en' | 'zh' }) => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-4">
+             {/* Developer Section */}
              <div className="space-y-4">
                 <div className="flex items-center gap-3 text-slate-900">
                   <User className="size-5 text-orange-600" />
                   <h3 className="font-black uppercase text-xs tracking-widest">{isZh ? '开发者信息' : 'Developer'}</h3>
                 </div>
-                <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 space-y-4">
+                <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 space-y-4 h-full">
                    <div className="flex items-center gap-4">
                       <div className="size-12 rounded-full bg-slate-200 overflow-hidden border border-slate-200">
                         <img src="https://github.com/LoveDoLove.png" alt="LoveDoLove" />
@@ -60,20 +60,50 @@ export const AboutView = ({ lang }: { lang: 'en' | 'zh' }) => {
                    </p>
                 </div>
              </div>
+
+             {/* License Section */}
              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-slate-900">
+                  <Scale className="size-5 text-orange-600" />
+                  <h3 className="font-black uppercase text-xs tracking-widest">{isZh ? '开源授权' : 'License'}</h3>
+                </div>
+                <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 flex flex-col justify-between h-full">
+                   <div>
+                     <p className="text-[11px] font-black text-slate-900 uppercase tracking-tighter mb-2">Apache License 2.0</p>
+                     <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                       {isZh 
+                         ? '本项目采用 Apache 2.0 协议授权。您可以自由使用、修改和分发代码，但需保留原始版权声明。' 
+                         : 'This project is licensed under the Apache License 2.0. You are free to use, modify, and distribute the code with attribution.'}
+                     </p>
+                   </div>
+                   <div className="mt-4">
+                      <a 
+                        href="https://www.apache.org/licenses/LICENSE-2.0" 
+                        target="_blank" 
+                        className="text-[9px] font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-widest flex items-center gap-1"
+                      >
+                        {isZh ? '阅读协议全文' : 'Read Full License'} <ExternalLink className="size-3" />
+                      </a>
+                   </div>
+                </div>
+             </div>
+
+             {/* Mission Section */}
+             <div className="space-y-4 md:col-span-2 lg:col-span-1">
                 <div className="flex items-center gap-3 text-slate-900">
                   <Info className="size-5 text-orange-600" />
                   <h3 className="font-black uppercase text-xs tracking-widest">{isZh ? '项目愿景' : 'Mission'}</h3>
                 </div>
-                <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6">
+                <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 h-full flex flex-col justify-between">
                    <p className="text-xs text-slate-600 leading-relaxed font-medium italic">
                      {isZh 
                        ? '“让复杂的边缘基础设施管理变得简单、安全且触手可及。”' 
                        : '"Making complex edge infrastructure management simple, secure, and accessible to everyone."'}
                    </p>
-                   <div className="mt-4 flex gap-2">
-                      <div className="badge badge-sm bg-orange-100 text-orange-700 border-none font-black text-[9px] px-3">NEXT.JS</div>
-                      <div className="badge badge-sm bg-blue-100 text-blue-700 border-none font-black text-[9px] px-3">CLOUDFLARE API</div>
+                   <div className="mt-6 flex flex-wrap gap-2">
+                      <div className="badge badge-sm bg-orange-100 text-orange-700 border-none font-black text-[9px] px-3 py-3">NEXT.JS</div>
+                      <div className="badge badge-sm bg-blue-100 text-blue-700 border-none font-black text-[9px] px-3 py-3">CLOUDFLARE API</div>
+                      <div className="badge badge-sm bg-slate-200 text-slate-700 border-none font-black text-[9px] px-3 py-3 uppercase">Wrangler</div>
                    </div>
                 </div>
              </div>
