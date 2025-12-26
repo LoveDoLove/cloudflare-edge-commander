@@ -128,9 +128,7 @@ export default function App() {
             <button onClick={() => state.setLang('en')} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${state.lang === 'en' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500'}`}>EN</button>
             <button onClick={() => state.setLang('zh')} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${state.lang === 'zh' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500'}`}>中文</button>
           </div>
-          <a href="https://github.com/LoveDoLove" target="_blank" className="flex items-center gap-2 text-[10px] font-bold text-slate-500 hover:text-white transition-colors">
-            <Github className="size-3.5" /> {t.repo}
-          </a>
+          {/* Repository link removed from here */}
         </div>
       </aside>
 
