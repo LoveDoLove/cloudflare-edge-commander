@@ -71,13 +71,16 @@ export default function App() {
       <aside className="w-60 bg-slate-900 flex flex-col shrink-0 relative z-20 shadow-2xl">
         <div className="p-6">
           <div className="flex items-center gap-3">
-            <div className="size-10 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-950/40 border border-indigo-400/20">
+            <div className="size-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-950/40 border border-orange-400/20">
               <Layers className="size-5 text-white" />
             </div>
             <div className="flex flex-col">
               <div className="text-white font-black tracking-widest text-[11px] uppercase leading-none">Edge</div>
-              <div className="text-indigo-400 font-black tracking-widest text-[9px] uppercase leading-none mt-1">Commander</div>
+              <div className="text-orange-400 font-black tracking-widest text-[9px] uppercase leading-none mt-1">Commander</div>
             </div>
+          </div>
+          <div className="mt-4 px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+            <p className="text-[7px] font-black text-orange-500 uppercase tracking-[0.2em] text-center">Cloudflare Edition</p>
           </div>
         </div>
 
@@ -92,7 +95,7 @@ export default function App() {
             ].map(tab => (
               <button 
                 key={tab.id} onClick={() => state.setActiveTab(tab.id as any)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${state.activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-950/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white active:text-white'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${state.activeTab === tab.id ? 'bg-orange-600 text-white shadow-xl shadow-orange-950/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white active:text-white'}`}
               >
                 <tab.icon className="size-4" /> {tab.label}
               </button>
@@ -119,8 +122,8 @@ export default function App() {
 
         <div className="p-4 mt-auto space-y-4 border-t border-slate-800">
           <div className="flex bg-slate-800 rounded-xl p-1">
-            <button onClick={() => state.setLang('en')} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${state.lang === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500'}`}>EN</button>
-            <button onClick={() => state.setLang('zh')} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${state.lang === 'zh' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500'}`}>中文</button>
+            <button onClick={() => state.setLang('en')} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${state.lang === 'en' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500'}`}>EN</button>
+            <button onClick={() => state.setLang('zh')} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${state.lang === 'zh' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500'}`}>中文</button>
           </div>
           <a href="https://github.com/LoveDoLove" target="_blank" className="flex items-center gap-2 text-[10px] font-bold text-slate-500 hover:text-white transition-colors">
             <Github className="size-3.5" /> {t.repo}

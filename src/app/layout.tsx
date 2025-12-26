@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Edge Commander | Cloudflare Infrastructure Suite",
+  title: "Cloudflare Edge Commander",
   description:
-    "Advanced management suite for Cloudflare DNS, SSL/TLS, CA Deployment, and IPv6 Network Intelligence.",
+    "Exclusive management suite for Cloudflare DNS, SSL/TLS, CA Deployment, and IPv6 Network Intelligence.",
 };
 
 export default function RootLayout({
