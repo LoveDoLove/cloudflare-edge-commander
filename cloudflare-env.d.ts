@@ -4,7 +4,7 @@
 declare namespace Cloudflare {
 	interface Env {
 		NEXTJS_ENV: string;
-		WORKER_SELF_REFERENCE: Fetcher /* ip6-arpa-dnsgen-autossl */;
+		WORKER_SELF_REFERENCE: Fetcher /* cloudflare-edge-commander */;
 		IMAGES: ImagesBinding;
 		ASSETS: Fetcher;
 	}
