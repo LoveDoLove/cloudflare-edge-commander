@@ -37,7 +37,7 @@ export const ConnectivityView = ({ state }: { state: any }) => {
           <div className="size-11 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shadow-inner"><List className="size-6" /></div>
           <h3 className="font-black text-slate-900 text-base tracking-tight uppercase">{t.active_contexts}</h3>
         </div>
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-50 border border-slate-100 rounded-2xl mt-6 max-h-[300px] custom-scrollbar-light shadow-inner bg-slate-50/30">
+        <div className="flex-1 overflow-y-auto divide-y divide-slate-50 border border-slate-100 rounded-2xl mt-6 max-h-75 custom-scrollbar-light shadow-inner bg-slate-50/30">
           {state.accounts.length === 0 ? (
             <div className="p-16 text-center flex flex-col items-center opacity-30">
               <Activity className="size-10 mb-3" />
