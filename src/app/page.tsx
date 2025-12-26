@@ -73,7 +73,7 @@ export default function App() {
       <aside className="w-60 bg-slate-900 flex flex-col shrink-0 relative z-20 shadow-2xl">
         <div className="p-6">
           <div className="flex items-center gap-3">
-            <div className="size-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-950/40 border border-orange-400/20">
+            <div className="size-10 bg-linear-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-950/40 border border-orange-400/20">
               <Layers className="size-5 text-white" />
             </div>
             <div className="flex flex-col">
@@ -128,7 +128,6 @@ export default function App() {
             <button onClick={() => state.setLang('en')} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${state.lang === 'en' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500'}`}>EN</button>
             <button onClick={() => state.setLang('zh')} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${state.lang === 'zh' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500'}`}>中文</button>
           </div>
-          {/* Repository link removed from here */}
         </div>
       </aside>
 
