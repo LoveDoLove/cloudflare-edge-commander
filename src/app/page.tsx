@@ -19,7 +19,8 @@ import {
   Dices, 
   RefreshCcw, 
   Heart, 
-  FileText 
+  FileText,
+  Github
 } from 'lucide-react';
 
 /**
@@ -79,7 +80,7 @@ export default function Home() {
   const [authEmail, setAuthEmail] = useState('');
   const [globalKey, setGlobalKey] = useState('');
   const [zoneId, setZoneId] = useState('');
-  const [ipv6Input, setIpv6Input] = useState('2001:470:24:5dd::/64');
+  const [ipv6Input, setIpv6Input] = useState('2001:db8::/32');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [logs, setLogs] = useState<{ msg: string, type: string, time: string }[]>([]);
@@ -146,9 +147,20 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 border border-slate-100 rounded-full">
-            <span className="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Live: API Connection OK</span>
+          <div className="flex items-center gap-4">
+            <a 
+              href="https://github.com/LoveDoLove/ip6-arpa-dnsgen-autossl" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="size-10 flex items-center justify-center rounded-xl bg-slate-900 text-white hover:bg-indigo-600 transition-all shadow-md shadow-indigo-100/50 group"
+              title="View Repository"
+            >
+              <Github className="size-5 group-hover:scale-110 transition-transform" />
+            </a>
+            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 border border-slate-100 rounded-full">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Live: API Connection OK</span>
+            </div>
           </div>
         </header>
 
@@ -218,7 +230,7 @@ export default function Home() {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Source IPv6 / Prefix</label>
-                <input type="text" value={ipv6Input} onChange={(e) => setIpv6Input(e.target.value)} className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all" placeholder="e.g. 2001:470:fc07::/48" />
+                <input type="text" value={ipv6Input} onChange={(e) => setIpv6Input(e.target.value)} className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all" placeholder="e.g. 2001:db8::/32" />
               </div>
             </div>
 
@@ -237,10 +249,10 @@ export default function Home() {
                   </div>
                 ) : (
                   logs.map((log, i) => (
-                    <div key={i} className="flex gap-4 border-b border-white/[0.03] pb-2.5">
-                      <span className="text-slate-600 shrink-0 opacity-50">[{log.time}]</span>
+                    <div key={i} className="flex gap-4 border-b border-white/[0.03] pb-2.5 group">
+                      <span className="text-slate-600 shrink-0 select-none opacity-50">[{log.time}]</span>
                       <span className={`shrink-0 font-bold ${log.type === 'success' ? 'text-emerald-500' : 'text-indigo-400'}`}>{log.type.toUpperCase()}</span>
-                      <span className="text-slate-300">{log.msg}</span>
+                      <span className={log.type === 'success' ? 'text-emerald-50' : 'text-slate-300'}>{log.msg}</span>
                     </div>
                   ))
                 )}
@@ -259,6 +271,14 @@ export default function Home() {
               </a>
               <a href="/privacy" className="hover:text-indigo-500 transition-colors flex items-center gap-1.5">
                 <ShieldCheck className="size-3" /> Privacy
+              </a>
+              <a 
+                href="https://github.com/LoveDoLove/ip6-arpa-dnsgen-autossl" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-indigo-500 transition-colors flex items-center gap-1.5"
+              >
+                <Github className="size-3" /> Repository
               </a>
               <span className="opacity-20">|</span>
               <span>Next.js 16</span>
