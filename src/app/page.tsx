@@ -89,6 +89,13 @@ const generateRandomIPv6 = (currentInput: string) => {
   }
 };
 
+// DNS Record types supported by Cloudflare
+const DNS_TYPES = [
+  'A', 'AAAA', 'CAA', 'CERT', 'CNAME', 'DNSKEY', 'DS', 'HTTPS', 
+  'LOC', 'MX', 'NAPTR', 'NS', 'PTR', 'SMIMEA', 'SRV', 'SSHFP', 
+  'SVCB', 'TLSA', 'TXT', 'URI'
+];
+
 export default function Home() {
   // Navigation State
   const [activeTab, setActiveTab] = useState<'auth' | 'edge' | 'utils'>('auth');
@@ -323,6 +330,9 @@ export default function Home() {
     addLog(`Arpa: ${resultArpa}`, 'success');
   };
 
+  // Helper to check if a record type supports proxying
+  const canBeProxied = (type: string) => ['A', 'AAAA', 'CNAME'].includes(type);
+
   return (
     <div className="flex h-screen font-sans overflow-hidden bg-[#F1F5F9] text-slate-900">
       
@@ -335,7 +345,7 @@ export default function Home() {
             </div>
             <div className="min-w-0">
               <h1 className="text-xs font-black tracking-tighter text-white uppercase leading-tight truncate">ip6-arpa-dnsgen</h1>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">v1.2.0-stable</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">v1.2.1-stable</p>
             </div>
           </div>
         </div>
@@ -480,21 +490,65 @@ export default function Home() {
                              <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2"><Globe className="size-3" /> DNS Records</h3>
                              {dnsLoading && <Loader2 className="size-3 animate-spin text-indigo-500" />}
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100">
-                             <select value={newDns.type} onChange={e => setNewDns({...newDns, type: e.target.value})} className="select select-xs select-bordered bg-white font-bold h-8 min-h-0 text-[10px]"><option>A</option><option>AAAA</option><option>CNAME</option><option>TXT</option><option>MX</option></select>
-                             <input type="text" placeholder="Name" value={newDns.name} onChange={e => setNewDns({...newDns, name: e.target.value})} className="input input-xs bg-white border-slate-200 h-8 min-h-0 text-[10px] font-bold" />
+                          <div className="grid grid-cols-1 sm:grid-cols-6 gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                             <select 
+                               value={newDns.type} 
+                               onChange={e => {
+                                 const type = e.target.value;
+                                 setNewDns({...newDns, type, proxied: canBeProxied(type) ? newDns.proxied : false});
+                               }} 
+                               className="select select-xs select-bordered bg-white font-bold h-8 min-h-0 text-[10px] sm:col-span-1"
+                             >
+                                {DNS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                             </select>
+                             <input type="text" placeholder="Name" value={newDns.name} onChange={e => setNewDns({...newDns, name: e.target.value})} className="input input-xs bg-white border-slate-200 h-8 min-h-0 text-[10px] font-bold sm:col-span-1" />
                              <input type="text" placeholder="Content" value={newDns.content} onChange={e => setNewDns({...newDns, content: e.target.value})} className="input input-xs bg-white border-slate-200 h-8 min-h-0 text-[10px] font-bold sm:col-span-2" />
-                             <button onClick={handleAddDnsRecord} disabled={dnsLoading} className="btn btn-xs btn-primary h-8 min-h-0 font-black uppercase">Add</button>
+                             
+                             <div className="flex items-center justify-center sm:col-span-1">
+                                {canBeProxied(newDns.type) && (
+                                  <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                                    <input 
+                                      type="checkbox" 
+                                      checked={newDns.proxied} 
+                                      onChange={e => setNewDns({...newDns, proxied: e.target.checked})} 
+                                      className="checkbox checkbox-xs checkbox-primary" 
+                                    />
+                                    <span className="text-[9px] font-black text-slate-500 uppercase">Proxy</span>
+                                  </label>
+                                )}
+                             </div>
+
+                             <button onClick={handleAddDnsRecord} disabled={dnsLoading} className="btn btn-xs btn-primary h-8 min-h-0 font-black uppercase sm:col-span-1">Add</button>
                           </div>
                           <div className="max-h-48 overflow-y-auto border border-slate-100 rounded-2xl relative min-h-[120px]">
                              {dnsLoading ? (
                                <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex flex-col items-center justify-center z-10 gap-2"><span className="loading loading-spinner loading-md text-indigo-600"></span><p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] animate-pulse">Syncing DNS...</p></div>
                              ) : (
                                <table className="table table-xs w-full">
-                                  <thead><tr><th>TYPE</th><th>NAME</th><th>CONTENT</th><th className="text-right">DEL</th></tr></thead>
+                                  <thead className="bg-slate-50 border-b border-slate-100">
+                                    <tr className="text-slate-800 font-black">
+                                      <th className="py-2.5 text-[11px] uppercase tracking-wider">Type</th>
+                                      <th className="py-2.5 text-[11px] uppercase tracking-wider">Name</th>
+                                      <th className="py-2.5 text-[11px] uppercase tracking-wider">Content</th>
+                                      <th className="py-2.5 text-[11px] uppercase tracking-wider">Proxy</th>
+                                      <th className="py-2.5 text-[11px] uppercase tracking-wider text-right">Del</th>
+                                    </tr>
+                                  </thead>
                                   <tbody>
                                     {dnsRecords.map(r => (
-                                      <tr key={r.id} className="hover:bg-slate-50 border-b border-slate-50 last:border-0"><td className="font-black text-indigo-600">{r.type}</td><td className="font-bold">{r.name}</td><td className="text-[9px] font-mono opacity-50 truncate max-w-[120px]">{r.content}</td><td className="text-right"><button onClick={() => handleDeleteDnsRecord(r.id, r.name)} className="text-rose-500 hover:scale-110 transition-transform"><Trash2 className="size-3" /></button></td></tr>
+                                      <tr key={r.id} className="hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors">
+                                        <td className="font-black text-indigo-600 py-2.5">{r.type}</td>
+                                        <td className="font-bold py-2.5">{r.name}</td>
+                                        <td className="text-[9px] font-mono opacity-50 truncate max-w-[120px] py-2.5">{r.content}</td>
+                                        <td className="py-2.5">
+                                          {r.proxied ? (
+                                            <div className="size-2.5 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.5)]" title="Proxied"></div>
+                                          ) : (
+                                            <div className="size-2.5 rounded-full bg-slate-200" title="DNS Only"></div>
+                                          )}
+                                        </td>
+                                        <td className="text-right py-2.5"><button onClick={() => handleDeleteDnsRecord(r.id, r.name)} className="text-rose-500 hover:scale-110 transition-transform"><Trash2 className="size-3" /></button></td>
+                                      </tr>
                                     ))}
                                   </tbody>
                                </table>
@@ -502,7 +556,7 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {/* Separate Provisioning Blocks - Static Dark Style for "Action" contrast */}
+                        {/* Separate Provisioning Blocks */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                            {/* CA Provider Management */}
                            <div className="bg-slate-900 rounded-3xl p-6 shadow-xl space-y-4 relative overflow-hidden flex flex-col min-h-[220px]">
