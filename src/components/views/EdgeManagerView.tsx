@@ -15,7 +15,8 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
   const { t } = state;
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl shadow-lg shadow-slate-200/40 flex flex-col overflow-hidden transition-all duration-500">
+      {/* Zone Registry Sidebar */}
+      <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl shadow-lg shadow-slate-200/40 flex flex-col overflow-hidden transition-all duration-500 min-w-0">
         <div className="p-5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-[10px] font-black uppercase text-slate-700 tracking-[0.15em]">{t.zone_registry}</h3>
           <span className="badge badge-sm font-black text-[10px] bg-slate-200 border-none text-slate-600 px-3">{state.zones.length}</span>
@@ -27,24 +28,51 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                 <button onClick={state.handleAddDomain} disabled={state.loadStates.addDomain} className="btn btn-md btn-primary rounded-xl h-11 px-4 border-none shadow-md text-white hover:bg-indigo-700">{t.add_btn}</button>
               </div>
            )}
-           <div className="max-h-[480px] overflow-y-auto space-y-2 custom-scrollbar-light pr-1">
-              {!state.selectedAccountId ? <div className="p-20 text-center text-[10px] text-slate-400 font-black uppercase opacity-50">{t.select_account}</div> : state.zones.map((z: any) => (
-                <button key={z.id} onClick={() => state.handleSelectZone(z.id, z.name)} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center justify-between group transition-all border duration-300 ${state.zoneId === z.id ? 'bg-indigo-600 text-white border-indigo-500 shadow-xl shadow-indigo-100 scale-[1.02]' : 'bg-white border-slate-100 hover:border-indigo-200 hover:bg-slate-50 text-slate-800'}`}>
-                    <span className="text-[12px] font-black truncate flex-1 pr-4">{z.name}</span>
-                    <ChevronRight className={`size-4 transition-transform ${state.zoneId === z.id ? 'translate-x-0' : 'translate-x-[-4px] opacity-0 group-hover:opacity-100'}`} />
-                </button>
-              ))}
+           {/* Added px-1 and pr-2 to give selected items breathing room within the scroll area */}
+           <div className="max-h-[480px] overflow-y-auto space-y-2 custom-scrollbar-light px-1 pr-2">
+              {!state.selectedAccountId ? (
+                <div className="p-20 text-center text-[10px] text-slate-400 font-black uppercase opacity-50">{t.select_account}</div>
+              ) : (
+                state.zones.map((z: any) => (
+                  <button 
+                    key={z.id} 
+                    onClick={() => state.handleSelectZone(z.id, z.name)} 
+                    title={z.name}
+                    className={`w-full text-left px-5 py-4 rounded-2xl flex items-center justify-between group transition-all border duration-300 min-w-0 ${
+                      state.zoneId === z.id 
+                        ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-100 ring-2 ring-indigo-600 ring-offset-2' 
+                        : 'bg-white border-slate-100 hover:border-indigo-200 hover:bg-slate-50 text-slate-800'
+                    }`}
+                  >
+                    <span className="text-[12px] font-black truncate flex-1 pr-4 min-w-0">
+                      {z.name}
+                    </span>
+                    <ChevronRight className={`size-4 shrink-0 transition-transform ${state.zoneId === z.id ? 'translate-x-0' : 'translate-x-[-4px] opacity-0 group-hover:opacity-100'}`} />
+                  </button>
+                ))
+              )}
            </div>
         </div>
       </div>
 
-      <div className="lg:col-span-8 space-y-8">
+      {/* DNS Management Area */}
+      <div className="lg:col-span-8 space-y-8 min-w-0">
         {state.zoneId ? (
           <>
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-8 space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-50 pb-4">
-                 <div className="flex items-center gap-4"><div className="size-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner"><Globe className="size-7" /></div><div><h3 className="text-base font-black text-slate-900 tracking-tight uppercase">{t.dns_registry}</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.active_zone}: {state.selectedZoneName}</p></div></div>
-                 {state.loadStates.dns && <Loader2 className="size-5 animate-spin text-indigo-600" />}
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-8 space-y-6 overflow-hidden">
+              <div className="flex items-center justify-between border-b border-slate-50 pb-4 min-w-0">
+                 <div className="flex items-center gap-4 min-w-0">
+                    <div className="size-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner shrink-0">
+                      <Globe className="size-7" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-base font-black text-slate-900 tracking-tight uppercase truncate">{t.dns_registry}</h3>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate" title={state.selectedZoneName}>
+                        {t.active_zone}: {state.selectedZoneName}
+                      </p>
+                    </div>
+                 </div>
+                 {state.loadStates.dns && <Loader2 className="size-5 animate-spin text-indigo-600 shrink-0" />}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-inner">
                  <select value={state.newDns.type} onChange={e => { const type = e.target.value; state.setNewDns({...state.newDns, type, proxied: canBeProxied(type) ? state.newDns.proxied : false}); }} className="select select-sm select-bordered bg-white font-black h-11 text-[11px] sm:col-span-1 rounded-xl focus:outline-none shadow-sm">{DNS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select>
