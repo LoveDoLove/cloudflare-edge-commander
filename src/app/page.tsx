@@ -18,6 +18,7 @@ import {
   Activity,
   Dices,
   RefreshCcw,
+  Heart,
 } from "lucide-react";
 
 /**
@@ -204,10 +205,10 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight leading-none">
-                CF.Manager
+                ip6-arpa-dnsgen-autossl
               </h1>
               <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-[0.1em]">
-                Edge Automation Suite
+                created by <span className="text-indigo-500">LoveDoLove</span>
               </p>
             </div>
           </div>
@@ -468,6 +469,24 @@ export default function Home() {
             </div>
           </section>
         </div>
+
+        {/* Footer */}
+        <footer className="pt-10 pb-6 border-t border-slate-200">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-2">
+            <div className="flex gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest items-center">
+              <span>Next.js 16</span>
+              <span>Tailwind 4</span>
+              <span>Cloudflare API v4</span>
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-medium text-slate-400">
+              <span>Made with</span>
+              <Heart className="size-3 text-rose-500 fill-rose-500" />
+              <span>by LoveDoLove</span>
+              <span className="mx-2 opacity-30">|</span>
+              <span>© {new Date().getFullYear()}</span>
+            </div>
+          </div>
+        </footer>
 
         {/* Global Styles */}
         <style jsx global>{`
