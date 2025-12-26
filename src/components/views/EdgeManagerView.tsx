@@ -28,8 +28,8 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                 <button onClick={state.handleAddDomain} disabled={state.loadStates.addDomain} className="btn btn-md btn-primary rounded-xl h-11 px-4 border-none shadow-md text-white hover:bg-indigo-700">{t.add_btn}</button>
               </div>
            )}
-           {/* Added px-1 and pr-2 to give selected items breathing room within the scroll area */}
-           <div className="max-h-[480px] overflow-y-auto space-y-2 custom-scrollbar-light px-1 pr-2">
+           {/* Added py-2 to prevent selection rings from hitting the top/bottom edges */}
+           <div className="max-h-[480px] overflow-y-auto space-y-2 custom-scrollbar-light px-1 pr-2 py-2">
               {!state.selectedAccountId ? (
                 <div className="p-20 text-center text-[10px] text-slate-400 font-black uppercase opacity-50">{t.select_account}</div>
               ) : (
