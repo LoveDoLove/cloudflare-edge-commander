@@ -329,16 +329,14 @@ export default function App() {
   return (
     <div className="flex h-screen font-sans overflow-hidden bg-slate-50 text-slate-900">
       
-      {/* Sidebar - Pro Layout */}
+      {/* Sidebar - Pro Sidebar */}
       <aside className="w-60 bg-slate-900 flex flex-col shrink-0 relative z-20 shadow-2xl">
         <div className="p-6">
           <div className="flex items-center gap-3">
             <div className="size-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-950/40">
               <ShieldCheck className="size-6 text-white" />
             </div>
-            <div className="min-w-0">
-              <h1 className="text-xs font-black tracking-widest text-white uppercase leading-tight">ip6-arpa</h1>
-            </div>
+            <div className="min-w-0 text-white font-black tracking-widest text-xs uppercase leading-tight">ip6-arpa</div>
           </div>
         </div>
 
@@ -365,7 +363,7 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Main Container */}
+      {/* Main Workspace */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 shadow-sm">
@@ -380,8 +378,8 @@ export default function App() {
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar-light">
-          <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar-light">
+          <div className="max-w-6xl mx-auto space-y-6 transition-all duration-500">
             
             {/* View: Connectivity */}
             {activeTab === 'auth' && (
@@ -389,7 +387,7 @@ export default function App() {
                 <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-8 space-y-6">
                   <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
                     <div className="size-11 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shadow-inner"><Key className="size-6" /></div>
-                    <h3 className="font-black text-slate-900 text-base tracking-tight">API Credentials</h3>
+                    <h3 className="font-black text-slate-900 text-base tracking-tight uppercase">API Credentials</h3>
                   </div>
                   <div className="space-y-4">
                     <div className="form-control">
@@ -409,7 +407,7 @@ export default function App() {
                 <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-8 flex flex-col">
                   <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
                     <div className="size-11 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shadow-inner"><List className="size-6" /></div>
-                    <h3 className="font-black text-slate-900 text-base tracking-tight">Active Contexts</h3>
+                    <h3 className="font-black text-slate-900 text-base tracking-tight uppercase">Active Contexts</h3>
                   </div>
                   <div className="flex-1 overflow-y-auto divide-y divide-slate-50 border border-slate-100 rounded-2xl mt-6 max-h-[300px] custom-scrollbar-light">
                     {accounts.length === 0 ? (
@@ -433,102 +431,100 @@ export default function App() {
               </div>
             )}
 
-            {/* View: Edge Manager */}
+            {/* View: Edge Manager - REFINED SIZE */}
             {activeTab === 'edge' && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                   
-                  {/* Expanded Domain Explorer */}
-                  <div className="lg:col-span-1 bg-white border border-slate-200 rounded-2xl shadow-lg shadow-slate-200/40 flex flex-col overflow-hidden">
-                    <div className="p-5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                      <h3 className="text-[10px] font-black uppercase text-slate-700 tracking-[0.15em]">Zone Registry</h3>
-                      <span className="badge badge-sm font-black text-[9px] bg-slate-200 border-none text-slate-600">{zones.length}</span>
+                  {/* Registry Sidebar - Expanded Width */}
+                  <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl shadow-lg shadow-slate-200/40 flex flex-col overflow-hidden">
+                    <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                      <h3 className="text-[10px] font-black uppercase text-slate-700 tracking-[0.15em]">Registry</h3>
+                      <span className="badge badge-sm font-black text-[9px] bg-slate-200 border-none text-slate-600 px-2.5">{zones.length}</span>
                     </div>
                     <div className="p-4 space-y-4">
                        {selectedAccountId && (
                           <div className="flex gap-2">
-                            <input type="text" placeholder="Add domain..." value={newDomainName} onChange={(e) => setNewDomainName(e.target.value)} className="input input-sm bg-white border-slate-200 flex-1 rounded-xl text-[11px] font-bold h-10 focus:ring-4 focus:ring-indigo-50" />
-                            <button onClick={handleAddDomain} disabled={addDomainLoading} className="btn btn-sm btn-primary rounded-xl h-10 px-3 border-none shadow-md">Add</button>
+                            <input type="text" placeholder="Add Domain..." value={newDomainName} onChange={(e) => setNewDomainName(e.target.value)} className="input input-sm bg-white border-slate-200 flex-1 rounded-xl text-[10px] font-bold h-9 focus:ring-2 focus:ring-indigo-100" />
+                            <button onClick={handleAddDomain} disabled={addDomainLoading} className="btn btn-sm btn-primary rounded-xl h-9 px-3 border-none shadow-md text-[10px] font-black">ADD</button>
                           </div>
                        )}
-                       <div className="max-h-[460px] overflow-y-auto space-y-1.5 custom-scrollbar-light px-0.5">
+                       <div className="max-h-[440px] overflow-y-auto space-y-1.5 custom-scrollbar-light px-0.5">
                           {!selectedAccountId ? (
-                            <div className="p-16 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed opacity-50">Select Account<br/>to list zones</div>
+                            <div className="p-16 text-center text-[10px] text-slate-400 font-black uppercase tracking-widest opacity-50">Select Account</div>
                           ) : zones.map(z => (
-                            <button key={z.id} onClick={() => handleSelectZone(z.id, z.name)} className={`w-full text-left px-4 py-3.5 rounded-2xl flex items-center justify-between group transition-all border duration-300 ${zoneId === z.id ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-100' : 'bg-white border-slate-50 hover:border-slate-200 hover:bg-slate-50 text-slate-800'}`}>
-                                <span className="text-[11px] font-black truncate max-w-[120px]">{z.name}</span>
-                                <ChevronRight className={`size-4 transition-transform ${zoneId === z.id ? 'translate-x-0' : 'translate-x-[-4px] opacity-0 group-hover:opacity-100'}`} />
+                            <button key={z.id} onClick={() => handleSelectZone(z.id, z.name)} className={`w-full text-left px-4 py-3 rounded-2xl flex items-center justify-between group transition-all border duration-200 ${zoneId === z.id ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-100' : 'bg-white border-slate-50 hover:border-slate-200 hover:bg-slate-50 text-slate-800'}`}>
+                                <span className="text-[11px] font-black truncate flex-1 pr-4">{z.name}</span>
+                                <ChevronRight className={`size-3.5 transition-transform ${zoneId === z.id ? 'translate-x-0' : 'translate-x-[-3px] opacity-0 group-hover:opacity-100'}`} />
                             </button>
                           ))}
                        </div>
                     </div>
                   </div>
 
-                  {/* Zone Configuration Workspace */}
-                  <div className="lg:col-span-3 space-y-6">
+                  {/* Config Workspace - Smaller Gaps & Padding */}
+                  <div className="lg:col-span-8 space-y-6">
                     {zoneId ? (
                       <>
-                        <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-8 space-y-6">
-                          <div className="flex items-center justify-between border-b border-slate-50 pb-4">
+                        <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-6 space-y-5">
+                          <div className="flex items-center justify-between border-b border-slate-50 pb-3">
                              <div className="flex items-center gap-3">
-                               <div className="size-11 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shadow-inner"><Globe className="size-6" /></div>
-                               <h3 className="text-sm font-black uppercase text-slate-900 tracking-widest">Distributed DNS Registry</h3>
+                               <div className="size-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shadow-inner"><Globe className="size-6" /></div>
+                               <div>
+                                 <h3 className="text-sm font-black text-slate-900 tracking-tight uppercase">DNS Records</h3>
+                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{selectedZoneName}</p>
+                               </div>
                              </div>
                              {dnsLoading && <Loader2 className="size-4 animate-spin text-indigo-600" />}
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                             <select value={newDns.type} onChange={e => { const type = e.target.value; setNewDns({...newDns, type, proxied: canBeProxied(type) ? newDns.proxied : false}); }} className="select select-sm select-bordered bg-white font-black h-11 text-[11px] sm:col-span-1 rounded-xl focus:outline-none">{DNS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select>
-                             <input type="text" placeholder="Name" value={newDns.name} onChange={e => setNewDns({...newDns, name: e.target.value})} className="input input-sm bg-white border-slate-200 h-11 text-[11px] font-black sm:col-span-1 rounded-xl focus:ring-4 focus:ring-indigo-100" />
-                             <input type="text" placeholder="Content" value={newDns.content} onChange={e => setNewDns({...newDns, content: e.target.value})} className="input input-sm bg-white border-slate-200 h-11 text-[11px] font-black sm:col-span-2 rounded-xl focus:ring-4 focus:ring-indigo-100" />
+                          <div className="grid grid-cols-1 sm:grid-cols-6 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-inner">
+                             <select value={newDns.type} onChange={e => { const type = e.target.value; setNewDns({...newDns, type, proxied: canBeProxied(type) ? newDns.proxied : false}); }} className="select select-sm bg-white font-black h-9 text-[10px] sm:col-span-1 rounded-lg focus:outline-none">{DNS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select>
+                             <input type="text" placeholder="Name" value={newDns.name} onChange={e => setNewDns({...newDns, name: e.target.value})} className="input input-sm bg-white border-slate-200 h-9 text-[10px] font-black sm:col-span-1 rounded-lg focus:ring-2 focus:ring-indigo-100" />
+                             <input type="text" placeholder="Content" value={newDns.content} onChange={e => setNewDns({...newDns, content: e.target.value})} className="input input-sm bg-white border-slate-200 h-9 text-[10px] font-black sm:col-span-2 rounded-lg focus:ring-2 focus:ring-indigo-100" />
                              <div className="flex items-center justify-center sm:col-span-1">
                                 {canBeProxied(newDns.type) && (
                                   <label className="flex items-center gap-2 cursor-pointer select-none group">
-                                    <input type="checkbox" checked={newDns.proxied} onChange={e => setNewDns({...newDns, proxied: e.target.checked})} className="checkbox checkbox-sm checkbox-primary rounded-lg border-2 transition-all" />
-                                    <span className="text-[10px] font-black text-slate-600 uppercase group-hover:text-indigo-600">Proxy</span>
+                                    <input type="checkbox" checked={newDns.proxied} onChange={e => setNewDns({...newDns, proxied: e.target.checked})} className="checkbox checkbox-xs checkbox-primary rounded-md border-2" />
+                                    <span className="text-[10px] font-black text-slate-600 uppercase">Proxy</span>
                                   </label>
                                 )}
                              </div>
-                             <button onClick={handleAddDnsRecord} disabled={dnsLoading} className="btn btn-md btn-primary h-11 font-black uppercase sm:col-span-1 rounded-xl border-none shadow-md">Create</button>
+                             <button onClick={handleAddDnsRecord} disabled={dnsLoading} className="btn btn-sm btn-primary h-9 font-black uppercase sm:col-span-1 rounded-lg border-none">Create</button>
                           </div>
 
-                          {/* DNS Table Container */}
-                          <div className="max-h-80 overflow-auto border border-slate-200 rounded-2xl relative min-h-[180px]">
+                          <div className="max-h-64 overflow-auto border border-slate-200 rounded-xl relative min-h-[160px] bg-white">
                              {dnsLoading ? (
-                               <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 gap-3">
-                                 <span className="loading loading-spinner loading-lg text-indigo-600"></span>
-                                 <p className="text-[10px] font-black uppercase text-indigo-900 tracking-[0.2em] animate-pulse">Syncing DNS Records...</p>
+                               <div className="absolute inset-0 bg-white/80 backdrop-blur-[1px] flex flex-col items-center justify-center z-10 gap-3">
+                                 <span className="loading loading-spinner loading-md text-indigo-600"></span>
+                                 <p className="text-[10px] font-black uppercase text-indigo-900 tracking-widest animate-pulse">Syncing...</p>
                                </div>
                              ) : (
-                               <table className="table table-xs w-full min-w-[600px]">
+                               <table className="table table-xs w-full min-w-[600px] border-collapse">
                                   <thead className="bg-slate-100 text-slate-900 sticky top-0 z-10">
-                                    <tr className="font-black text-[10px] uppercase tracking-widest border-b border-slate-200">
-                                      <th className="px-5 py-4 w-20">Type</th>
-                                      <th className="px-5 py-4 w-32">Name</th>
-                                      <th className="px-5 py-4">Content</th>
-                                      <th className="px-5 py-4 text-center w-20">Proxy</th>
-                                      <th className="px-5 py-4 text-right w-20">Action</th>
+                                    <tr className="font-black text-[9px] uppercase tracking-widest border-b border-slate-200">
+                                      <th className="px-4 py-3.5 w-16">Type</th>
+                                      <th className="px-4 py-3.5 w-28">Name</th>
+                                      <th className="px-4 py-3.5">Content</th>
+                                      <th className="px-4 py-3.5 text-center w-16">Proxy</th>
+                                      <th className="px-4 py-3.5 text-right w-16">Action</th>
                                     </tr>
                                   </thead>
                                   <tbody>
                                     {dnsRecords.map(r => (
-                                      <tr key={r.id} className="hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors">
-                                        <td className="px-5 py-4 font-black text-indigo-700 text-[11px]">{r.type}</td>
-                                        <td className="px-5 py-4 font-bold text-slate-900 text-[11px] truncate max-w-[120px]">{r.name}</td>
-                                        <td className="px-5 py-4 text-[10px] font-mono text-slate-600 break-all">{r.content}</td>
-                                        <td className="px-5 py-4 text-center">
+                                      <tr key={r.id} className="hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors">
+                                        <td className="px-4 py-3 font-black text-indigo-700 text-[10px]">{r.type}</td>
+                                        <td className="px-4 py-3 font-bold text-slate-900 text-[10px] truncate max-w-[140px]">{r.name}</td>
+                                        <td className="px-4 py-3 text-[10px] font-mono text-slate-500 break-all">{r.content}</td>
+                                        <td className="px-4 py-3 text-center">
                                           {r.proxied ? (
-                                            <div className="size-3 mx-auto rounded-full bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.4)] border-2 border-white" title="Proxied" />
+                                            <div className="size-2.5 mx-auto rounded-full bg-orange-400 shadow-sm border border-white" />
                                           ) : (
-                                            <div className="size-3 mx-auto rounded-full bg-slate-200 border-2 border-white" title="DNS Only" />
+                                            <div className="size-2.5 mx-auto rounded-full bg-slate-200 border border-white" />
                                           )}
                                         </td>
-                                        <td className="px-5 py-4 text-right">
-                                          <button 
-                                            onClick={() => handleDeleteDnsRecord(r.id, r.name)} 
-                                            className="btn btn-ghost btn-xs text-rose-500 hover:bg-rose-50 rounded-xl transition-all hover:scale-110 flex items-center justify-center ml-auto"
-                                            title="Delete Record"
-                                          >
+                                        <td className="px-4 py-3 text-right">
+                                          <button onClick={() => handleDeleteDnsRecord(r.id, r.name)} className="btn btn-ghost btn-xs text-rose-500 p-1 hover:bg-rose-50 rounded-lg transition-transform hover:scale-110">
                                             <Trash2 className="size-4" />
                                           </button>
                                         </td>
@@ -543,54 +539,51 @@ export default function App() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           <div className="bg-slate-900 rounded-2xl p-7 shadow-2xl shadow-slate-900/40 space-y-6 flex flex-col min-h-[220px] relative overflow-hidden">
-                              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl rounded-full" />
-                              <div className="flex items-center gap-3 relative z-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                           <div className="bg-slate-900 rounded-2xl p-6 shadow-xl space-y-5 flex flex-col min-h-[200px] relative overflow-hidden">
+                              <div className="flex items-center gap-3">
                                 <div className="size-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20 shadow-inner"><Award className="size-5" /></div>
-                                <h3 className="font-black text-white text-sm tracking-widest uppercase">CA Deployment</h3>
+                                <h3 className="font-black text-white text-xs tracking-widest uppercase">CA Deployment</h3>
                               </div>
                               {certLoading ? (
-                                 <div className="flex-1 flex flex-col items-center justify-center gap-3"><span className="loading loading-spinner loading-lg text-indigo-500"></span></div>
+                                 <div className="flex-1 flex flex-col items-center justify-center gap-2"><span className="loading loading-spinner loading-md text-indigo-500"></span></div>
                               ) : (
                                 <>
                                   <div className="form-control flex-1">
-                                    <label className="label py-1.5"><span className="label-text text-slate-400 text-[10px] font-black uppercase tracking-widest">Issuing Authority</span></label>
-                                    <select value={caProvider} onChange={(e) => setCaProvider(e.target.value)} className="select select-sm bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-11 focus:ring-2 focus:ring-indigo-500/40 outline-none">
+                                    <label className="label py-1.5"><span className="label-text text-slate-400 text-[10px] font-black uppercase tracking-widest">Authority</span></label>
+                                    <select value={caProvider} onChange={(e) => setCaProvider(e.target.value)} className="select select-sm bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-10 focus:ring-2 focus:ring-indigo-500/30 outline-none text-xs">
                                       <option value="google">Google Trust Services</option><option value="lets_encrypt">Let's Encrypt</option><option value="ssl_com">SSL.com</option><option value="digicert">DigiCert</option>
                                     </select>
                                   </div>
-                                  <button onClick={handleApplyCA} disabled={caLoading} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-[10px] h-12 border-none shadow-lg shadow-indigo-950/50">Update CA Provider</button>
+                                  <button onClick={handleApplyCA} disabled={caLoading} className="btn btn-primary btn-sm w-full rounded-xl font-black uppercase text-[10px] h-10 border-none shadow-lg shadow-indigo-950/50">Update CA</button>
                                 </>
                               )}
                            </div>
-                           <div className="bg-slate-900 rounded-2xl p-7 shadow-2xl shadow-slate-900/40 space-y-6 flex flex-col min-h-[220px] relative overflow-hidden">
-                              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full" />
-                              <div className="flex items-center gap-3 relative z-10">
+                           <div className="bg-slate-900 rounded-2xl p-6 shadow-xl space-y-5 flex flex-col min-h-[200px] relative overflow-hidden">
+                              <div className="flex items-center gap-3">
                                 <div className="size-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20 shadow-inner"><Shield className="size-5" /></div>
-                                <h3 className="font-black text-white text-sm tracking-widest uppercase">Encryption Layer</h3>
+                                <h3 className="font-black text-white text-xs tracking-widest uppercase">Encryption Layer</h3>
                               </div>
                               {certLoading ? (
-                                 <div className="flex-1 flex flex-col items-center justify-center gap-3"><span className="loading loading-spinner loading-lg text-indigo-500"></span></div>
+                                 <div className="flex-1 flex flex-col items-center justify-center gap-2"><span className="loading loading-spinner loading-md text-indigo-500"></span></div>
                               ) : (
                                 <>
                                   <div className="form-control flex-1">
                                     <label className="label py-1.5"><span className="label-text text-slate-400 text-[10px] font-black uppercase tracking-widest">Security Level</span></label>
-                                    <select value={sslMode} onChange={(e) => setSslMode(e.target.value)} className="select select-sm bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-11 focus:ring-2 focus:ring-indigo-500/40 outline-none">
+                                    <select value={sslMode} onChange={(e) => setSslMode(e.target.value)} className="select select-sm bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-10 focus:ring-2 focus:ring-indigo-500/30 outline-none text-xs">
                                       <option value="off">Off (Dev Only)</option><option value="flexible">Flexible</option><option value="full">Full</option><option value="strict">Full (Strict)</option>
                                     </select>
                                   </div>
-                                  <button onClick={handleApplySSL} disabled={sslLoading} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-[10px] h-12 border-none shadow-lg shadow-indigo-950/50">Enforce Encryption</button>
+                                  <button onClick={handleApplySSL} disabled={sslLoading} className="btn btn-primary btn-sm w-full rounded-xl font-black uppercase text-[10px] h-10 border-none shadow-lg shadow-indigo-950/50">Apply Encryption</button>
                                 </>
                               )}
                            </div>
                         </div>
                       </>
                     ) : (
-                      <div className="h-full min-h-[400px] bg-white border border-slate-200 border-dashed rounded-3xl flex flex-col items-center justify-center p-16 text-center opacity-50 shadow-inner">
-                        <div className="size-20 bg-slate-50 rounded-full flex items-center justify-center animate-pulse mb-6 shadow-inner"><CloudCog className="size-10 text-slate-300" /></div>
-                        <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-500">Ready for Action</h3>
-                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-2 max-w-xs leading-relaxed">Select a domain from the registry to synchronize configurations.</p>
+                      <div className="h-full min-h-[400px] bg-white border border-slate-200 border-dashed rounded-2xl flex flex-col items-center justify-center p-12 text-center opacity-40 shadow-inner">
+                        <CloudCog className="size-10 text-slate-300 mb-4 animate-pulse" />
+                        <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-500">Initialize Zone Context</h3>
                       </div>
                     )}
                   </div>
@@ -604,16 +597,16 @@ export default function App() {
                 <div className="bg-white border border-slate-200 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-12 text-center relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/50 blur-3xl rounded-full pointer-events-none" />
                   <div className="size-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm"><Network className="size-8" /></div>
-                  <h3 className="text-2xl font-black tracking-tighter text-slate-900 uppercase">IPv6 Intelligence Tooling</h3>
-                  <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-2 max-w-sm mx-auto">Compute reverse mapping (ip6.arpa) pointers for dense prefixes.</p>
+                  <h3 className="text-2xl font-black tracking-tighter text-slate-900 uppercase">IPv6 Intelligence</h3>
+                  <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-2 max-w-sm mx-auto opacity-70">Automated Reverse Mapping Engine</p>
                   
                   <div className="bg-slate-50 p-10 rounded-[2rem] border border-slate-100 mt-10 space-y-8 shadow-inner">
                     <div className="form-control text-left">
                       <label className="label py-1 px-2"><span className="label-text text-[11px] font-black uppercase text-slate-600 tracking-wider">Origin IPv6 / Block</span></label>
-                      <input type="text" value={ipv6Input} onChange={(e) => setIpv6Input(e.target.value)} className="input bg-white border-slate-200 rounded-2xl text-base font-mono shadow-sm h-16 text-center focus:ring-4 focus:ring-blue-100 transition-all" placeholder="2001:db8::/32" />
+                      <input type="text" value={ipv6Input} onChange={(e) => setIpv6Input(e.target.value)} className="input bg-white border-slate-200 rounded-2xl text-base font-mono shadow-sm h-16 text-center focus:ring-4 focus:ring-blue-100 transition-all border-none" placeholder="2001:db8::/32" />
                     </div>
-                    <button onClick={handleGenerate} className="btn btn-primary btn-lg w-full max-w-xs mx-auto rounded-2xl gap-4 font-black uppercase text-sm h-16 border-none shadow-xl shadow-indigo-900/20 active:scale-95 transition-transform">
-                      <RefreshCcw className="size-6" /> Run Computation
+                    <button onClick={handleGenerate} className="btn btn-primary btn-lg w-full max-w-xs mx-auto rounded-[1.5rem] gap-5 font-black uppercase text-base h-16 border-none shadow-xl shadow-indigo-900/20 active:scale-95 transition-transform">
+                      <RefreshCcw className="size-7" /> Execute Computation
                     </button>
                   </div>
                 </div>
@@ -624,20 +617,20 @@ export default function App() {
         </div>
 
         {/* Floating Console Drawer */}
-        <div className={`absolute bottom-0 left-0 right-0 bg-[#0F172A] border-t border-slate-800 transition-all duration-700 ease-in-out z-50 overflow-hidden shadow-[0_-20px_50px_-12px_rgba(0,0,0,0.6)] ${isConsoleOpen ? 'h-[280px]' : 'h-0'}`}>
+        <div className={`absolute bottom-0 left-0 right-0 bg-[#0F172A] border-t border-slate-800 transition-all duration-700 ease-in-out z-50 overflow-hidden shadow-2xl ${isConsoleOpen ? 'h-[280px]' : 'h-0'}`}>
           <div className="h-full flex flex-col">
-            <div className="bg-slate-800/60 px-8 py-3.5 flex items-center justify-between border-b border-slate-700/50">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] flex items-center gap-2.5">
-                <div className="flex gap-1.5"><div className="size-2 rounded-full bg-rose-500" /><div className="size-2 rounded-full bg-amber-500" /><div className="size-2 rounded-full bg-emerald-500" /></div>
-                <Terminal className="size-4 ml-2" /> Live Node Logs
+            <div className="bg-slate-800/70 px-8 py-3 flex items-center justify-between border-b border-slate-700/50">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2.5">
+                <div className="flex gap-1.5"><div className="size-2 rounded-full bg-rose-500/80" /><div className="size-2 rounded-full bg-amber-500/80" /><div className="size-2 rounded-full bg-emerald-500/80" /></div>
+                <Terminal className="size-4 ml-2" /> Live Process Monitor
               </span>
-              <button onClick={() => setIsConsoleOpen(false)} className="text-slate-500 hover:text-white p-1 transition-colors"><X className="size-5" /></button>
+              <button onClick={() => setIsConsoleOpen(false)} className="text-slate-500 hover:text-white p-1 transition-all hover:rotate-90 duration-300"><X className="size-5" /></button>
             </div>
             <div className="flex-1 p-6 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-2 custom-scrollbar bg-slate-950/40">
               {logs.map((log, i) => (
                 <div key={i} className="flex gap-6 group border-b border-white/[0.02] pb-2 hover:bg-white/[0.01] transition-colors">
                   <span className="text-slate-600 shrink-0 tabular-nums font-bold">[{log.time}]</span>
-                  <span className={`font-black tracking-widest ${log.type === 'success' ? 'text-emerald-500' : log.type === 'error' ? 'text-rose-500' : 'text-indigo-400'}`}>{log.type.toUpperCase()}</span>
+                  <span className={`shrink-0 font-black tracking-widest ${log.type === 'success' ? 'text-emerald-500' : log.type === 'error' ? 'text-rose-500' : 'text-indigo-400'}`}>{log.type.toUpperCase()}</span>
                   <span className={log.type === 'success' ? 'text-emerald-50' : log.type === 'error' ? 'text-rose-50' : 'text-slate-300'}>{log.msg}</span>
                 </div>
               ))}
@@ -650,7 +643,7 @@ export default function App() {
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #0F172A; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 12px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
         
         .custom-scrollbar-light::-webkit-scrollbar { width: 5px; }
@@ -658,7 +651,9 @@ export default function App() {
         .custom-scrollbar-light::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.1); border-radius: 10px; }
         
         table th { text-align: left !important; }
-        input::placeholder { font-weight: 700; color: #94A3B8; opacity: 0.5; }
+        input::placeholder { font-weight: 800; color: #94A3B8; opacity: 0.4; text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        aside nav button { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
       `}</style>
     </div>
   );
