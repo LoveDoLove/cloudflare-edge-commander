@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cloudflare SSL & IPv6 Manager",
+  title: "Edge Commander | Cloudflare Infrastructure Suite",
   description:
-    "Automate Cloudflare SSL settings and generate ip6.arpa DNS records.",
+    "Advanced management suite for Cloudflare DNS, SSL/TLS, CA Deployment, and IPv6 Network Intelligence.",
 };
 
 export default function RootLayout({

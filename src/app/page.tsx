@@ -3,14 +3,14 @@
 import React from 'react';
 import { 
   ShieldCheck, LayoutDashboard, CloudCog, Network, Github, Terminal, 
-  Lock, Scale, BookOpen 
+  Lock, Scale, BookOpen, Layers 
 } from 'lucide-react';
 
 import { useCloudflareManager } from '@/hooks/useCloudflareManager';
 import { ConnectivityView } from '@/components/views/ConnectivityView';
 import { EdgeManagerView } from '@/components/views/EdgeManagerView';
 import { NetworkLabView } from '@/components/views/NetworkLabView';
-import { DnsDocsView } from '@/components/views/DnsDocsView'; // Added import
+import { DnsDocsView } from '@/components/views/DnsDocsView'; 
 import { PrivacyView, TermsView } from '@/components/views/LegalViews';
 import { DeleteConfirmationModal, ConsoleDrawer } from '@/components/Overlays';
 
@@ -71,10 +71,13 @@ export default function App() {
       <aside className="w-60 bg-slate-900 flex flex-col shrink-0 relative z-20 shadow-2xl">
         <div className="p-6">
           <div className="flex items-center gap-3">
-            <div className="size-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-950/40">
-              <ShieldCheck className="size-6 text-white" />
+            <div className="size-10 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-950/40 border border-indigo-400/20">
+              <Layers className="size-5 text-white" />
             </div>
-            <div className="min-w-0 text-white font-black tracking-widest text-xs uppercase leading-tight">ip6-arpa</div>
+            <div className="flex flex-col">
+              <div className="text-white font-black tracking-widest text-[11px] uppercase leading-none">Edge</div>
+              <div className="text-indigo-400 font-black tracking-widest text-[9px] uppercase leading-none mt-1">Commander</div>
+            </div>
           </div>
         </div>
 
@@ -85,7 +88,7 @@ export default function App() {
               { id: 'auth', label: t.nav_conn, icon: LayoutDashboard },
               { id: 'edge', label: t.nav_edge, icon: CloudCog },
               { id: 'utils', label: t.nav_lab, icon: Network },
-              { id: 'docs', label: t.nav_docs, icon: BookOpen } // Added Documentation
+              { id: 'docs', label: t.nav_docs, icon: BookOpen }
             ].map(tab => (
               <button 
                 key={tab.id} onClick={() => state.setActiveTab(tab.id as any)}
