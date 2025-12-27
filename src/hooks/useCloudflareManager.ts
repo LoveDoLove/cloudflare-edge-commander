@@ -9,6 +9,9 @@ export function useCloudflareManager() {
   const [activeTab, setActiveTab] = useState<'auth' | 'edge' | 'utils' | 'docs' | 'about' | 'privacy' | 'terms'>('auth');
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [consoleHeight, setConsoleHeight] = useState(280);
+  
+  // Mobile Sidebar State
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [authEmail, setAuthEmail] = useState('');
   const [globalKey, setGlobalKey] = useState('');
@@ -422,6 +425,7 @@ export function useCloudflareManager() {
     lang, setLang, t,
     activeTab, setActiveTab, isConsoleOpen, setIsConsoleOpen,
     consoleHeight, setConsoleHeight,
+    isSidebarOpen, setIsSidebarOpen,
     authEmail, setAuthEmail, globalKey, setGlobalKey, handleFetchAccounts,
     accounts, selectedAccountId, handleSelectAccount,
     zones, zoneId, selectedZoneName, handleSelectZone,

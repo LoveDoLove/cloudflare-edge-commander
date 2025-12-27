@@ -6,11 +6,11 @@ import { Key, List, Loader2, Search, Activity, CheckCircle2 } from 'lucide-react
 export const ConnectivityView = ({ state }: { state: any }) => {
   const { t } = state;
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-8 space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-6 sm:p-8 space-y-6">
         <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
-          <div className="size-11 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shadow-inner"><Key className="size-6" /></div>
-          <h3 className="font-black text-slate-900 text-base tracking-tight uppercase">{t.api_creds}</h3>
+          <div className="size-10 sm:size-11 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shadow-inner"><Key className="size-5 sm:size-6" /></div>
+          <h3 className="font-black text-slate-900 text-sm sm:text-base tracking-tight uppercase">{t.api_creds}</h3>
         </div>
         <div className="space-y-4">
           <div className="form-control">
@@ -32,14 +32,14 @@ export const ConnectivityView = ({ state }: { state: any }) => {
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-8 flex flex-col">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-6 sm:p-8 flex flex-col">
         <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
-          <div className="size-11 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shadow-inner"><List className="size-6" /></div>
-          <h3 className="font-black text-slate-900 text-base tracking-tight uppercase">{t.active_contexts}</h3>
+          <div className="size-10 sm:size-11 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shadow-inner"><List className="size-5 sm:size-6" /></div>
+          <h3 className="font-black text-slate-900 text-sm sm:text-base tracking-tight uppercase">{t.active_contexts}</h3>
         </div>
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-50 border border-slate-100 rounded-2xl mt-6 max-h-75 custom-scrollbar-light shadow-inner bg-slate-50/30">
+        <div className="flex-1 overflow-y-auto divide-y divide-slate-50 border border-slate-100 rounded-2xl mt-6 max-h-75 sm:max-h-none custom-scrollbar-light shadow-inner bg-slate-50/30">
           {state.accounts.length === 0 ? (
-            <div className="p-16 text-center flex flex-col items-center opacity-30">
+            <div className="p-12 sm:p-16 text-center flex flex-col items-center opacity-30">
               <Activity className="size-10 mb-3" />
               <p className="text-[10px] font-black uppercase tracking-[0.2em]">{t.awaiting_auth}</p>
             </div>

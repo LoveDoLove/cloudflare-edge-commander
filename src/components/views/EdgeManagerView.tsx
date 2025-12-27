@@ -31,16 +31,16 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
           <h3 className="text-[10px] font-black uppercase text-slate-700 tracking-[0.15em]">{t.zone_registry}</h3>
           <span className="badge badge-sm font-black text-[10px] bg-slate-200 border-none text-slate-600 px-3">{state.zones.length}</span>
         </div>
-        <div className="p-5 space-y-5">
+        <div className="p-4 sm:p-5 space-y-5">
            {state.selectedAccountId && (
               <div className="flex gap-2">
                 <input type="text" placeholder={t.add_domain} value={state.newDomainName} onChange={(e) => state.setNewDomainName(e.target.value)} className="input input-sm bg-white border-slate-200 flex-1 rounded-xl text-[11px] font-bold h-11 focus:ring-4 focus:ring-indigo-50 shadow-sm" />
-                <button onClick={state.handleAddDomain} disabled={state.loadStates.addDomain} className="btn btn-md btn-primary rounded-xl h-11 px-4 border-none shadow-md text-white hover:bg-indigo-700">{t.add_btn}</button>
+                <button onClick={state.handleAddDomain} disabled={state.loadStates.addDomain} className="btn btn-sm sm:btn-md btn-primary rounded-xl h-11 px-4 border-none shadow-md text-white hover:bg-indigo-700">{t.add_btn}</button>
               </div>
            )}
-           <div className="max-h-120 overflow-y-auto space-y-2 custom-scrollbar-light px-1 pr-2 py-2">
+           <div className="max-h-60 sm:max-h-120 overflow-y-auto space-y-2 custom-scrollbar-light px-1 pr-2 py-2">
               {!state.selectedAccountId ? (
-                <div className="p-20 text-center text-[10px] text-slate-400 font-black uppercase opacity-50">{t.select_account}</div>
+                <div className="p-12 sm:p-20 text-center text-[10px] text-slate-400 font-black uppercase opacity-50">{t.select_account}</div>
               ) : (
                 state.zones.map((z: any) => (
                   <button 
@@ -65,21 +65,21 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
       <div className="lg:col-span-8 space-y-6 min-w-0">
         {state.zoneId ? (
           <>
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-8 space-y-6 overflow-hidden">
-              <div className="flex items-center justify-between border-b border-slate-50 pb-4 min-w-0 gap-4">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-5 sm:p-8 space-y-6 overflow-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 min-w-0 gap-4">
                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="size-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner shrink-0">
-                      <Globe className="size-7" />
+                    <div className="size-10 sm:size-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner shrink-0">
+                      <Globe className="size-6 sm:size-7" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-base font-black text-slate-900 tracking-tight uppercase truncate">{t.dns_registry}</h3>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">
+                      <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight uppercase truncate">{t.dns_registry}</h3>
+                      <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">
                         {t.active_zone}: {state.selectedZoneName}
                       </p>
                     </div>
                  </div>
                  
-                 <div className="flex-1 max-w-xs relative hidden md:block">
+                 <div className="flex-1 w-full sm:max-w-xs relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
                     <input 
                       type="text" 
@@ -89,66 +89,50 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                       className="input input-sm bg-slate-50 border-slate-200 w-full pl-9 rounded-xl text-[10px] font-bold h-10 focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all" 
                     />
                  </div>
-                 {state.loadStates.dns && <Loader2 className="size-5 animate-spin text-indigo-600 shrink-0" />}
+                 {state.loadStates.dns && <Loader2 className="size-5 animate-spin text-indigo-600 shrink-0 hidden sm:block" />}
               </div>
 
+              {/* Responsive Form Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-inner">
                  <select value={state.newDns.type} onChange={e => { const type = e.target.value; state.setNewDns({...state.newDns, type, proxied: canBeProxied(type) ? state.newDns.proxied : false}); }} className="select select-sm select-bordered bg-white font-black h-11 text-[11px] sm:col-span-1 rounded-xl focus:outline-none shadow-sm">{DNS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select>
                  <input type="text" placeholder="Name" value={state.newDns.name} onChange={e => state.setNewDns({...state.newDns, name: e.target.value})} className="input input-sm bg-white border-slate-200 h-11 text-[11px] font-black sm:col-span-1 rounded-xl focus:ring-4 focus:ring-indigo-100 shadow-sm" />
                  <input type="text" placeholder="Content" value={state.newDns.content} onChange={e => state.setNewDns({...state.newDns, content: e.target.value})} className="input input-sm bg-white border-slate-200 h-11 text-[11px] font-black sm:col-span-2 rounded-xl focus:ring-4 focus:ring-indigo-100 shadow-sm" />
-                 <div className="flex items-center justify-center sm:col-span-1">{canBeProxied(state.newDns.type) && <label className="flex items-center gap-2 cursor-pointer select-none group"><input type="checkbox" checked={state.newDns.proxied} onChange={e => state.setNewDns({...state.newDns, proxied: e.target.checked})} className="checkbox checkbox-sm checkbox-primary rounded-lg border-2 transition-all shadow-sm" /><span className="text-[10px] font-black text-slate-600 uppercase group-hover:text-indigo-600">{t.proxy}</span></label>}</div>
+                 <div className="flex items-center justify-center py-2 sm:py-0 sm:col-span-1">{canBeProxied(state.newDns.type) && <label className="flex items-center gap-2 cursor-pointer select-none group"><input type="checkbox" checked={state.newDns.proxied} onChange={e => state.setNewDns({...state.newDns, proxied: e.target.checked})} className="checkbox checkbox-sm checkbox-primary rounded-lg border-2 transition-all shadow-sm" /><span className="text-[10px] font-black text-slate-600 uppercase group-hover:text-indigo-600">{t.proxy}</span></label>}</div>
                  <button onClick={state.handleAddDnsRecord} disabled={state.loadStates.dns} className="btn btn-md btn-primary h-11 font-black uppercase rounded-xl border-none shadow-lg shadow-indigo-100 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50">{t.create}</button>
               </div>
 
-              {/* Bulk Action Toolbar */}
+              {/* Bulk Action Toolbar - Responsive Layout */}
               {state.selectedDnsIds.size > 0 && (
-                <div className="flex items-center justify-between bg-indigo-600 p-3 rounded-2xl shadow-lg animate-in slide-in-from-top-2 duration-300">
-                  <div className="flex items-center gap-3 ml-2">
+                <div className="flex flex-col sm:flex-row items-center justify-between bg-indigo-600 p-3 gap-3 rounded-2xl shadow-lg animate-in slide-in-from-top-2 duration-300">
+                  <div className="flex items-center gap-3 sm:ml-2">
                     <CheckSquare className="size-4 text-white" />
                     <span className="text-[10px] font-black text-white uppercase tracking-widest">
                       {t.selected_count.replace('{n}', state.selectedDnsIds.size.toString())}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => state.handleBulkProxy(true)} 
-                      disabled={state.loadStates.bulk}
-                      className="btn btn-xs bg-white/20 hover:bg-white/30 text-white border-none rounded-lg font-black uppercase text-[9px] h-8 px-3"
-                    >
-                      <Zap className="size-3 mr-1.5" /> {t.bulk_proxy}
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <button onClick={() => state.handleBulkProxy(true)} className="btn btn-xs bg-white/20 hover:bg-white/30 text-white border-none rounded-lg font-black uppercase text-[8px] sm:text-[9px] h-8 px-2 sm:px-3">
+                      <Zap className="size-3 mr-1" /> {t.bulk_proxy}
                     </button>
-                    <button 
-                      onClick={() => state.handleBulkProxy(false)} 
-                      disabled={state.loadStates.bulk}
-                      className="btn btn-xs bg-white/20 hover:bg-white/30 text-white border-none rounded-lg font-black uppercase text-[9px] h-8 px-3"
-                    >
-                      <ZapOff className="size-3 mr-1.5" /> {t.bulk_unproxy}
+                    <button onClick={() => state.handleBulkProxy(false)} className="btn btn-xs bg-white/20 hover:bg-white/30 text-white border-none rounded-lg font-black uppercase text-[8px] sm:text-[9px] h-8 px-2 sm:px-3">
+                      <ZapOff className="size-3 mr-1" /> {t.bulk_unproxy}
                     </button>
-                    <button 
-                      onClick={() => state.setShowBulkDeleteConfirm(true)} 
-                      disabled={state.loadStates.bulk}
-                      className="btn btn-xs bg-rose-500 hover:bg-rose-600 text-white border-none rounded-lg font-black uppercase text-[9px] h-8 px-3 shadow-md shadow-rose-900/20"
-                    >
-                      <Trash2 className="size-3 mr-1.5" /> {t.bulk_delete}
-                    </button>
-                    <button 
-                      onClick={() => state.toggleSelectAllDns([])} 
-                      className="btn btn-xs btn-ghost text-white/60 hover:text-white rounded-lg px-2"
-                    >
-                      <X className="size-4" />
+                    <button onClick={() => state.setShowBulkDeleteConfirm(true)} className="btn btn-xs bg-rose-500 hover:bg-rose-600 text-white border-none rounded-lg font-black uppercase text-[8px] sm:text-[9px] h-8 px-2 sm:px-3 shadow-md shadow-rose-900/20">
+                      <Trash2 className="size-3 mr-1" /> {t.bulk_delete}
                     </button>
                   </div>
                 </div>
               )}
 
-              <div className="max-h-120 overflow-auto border border-slate-200 rounded-2xl relative min-h-60 shadow-inner bg-white custom-scrollbar-light">
+              {/* Table Container - Horizontal Scroll for Mobile */}
+              <div className="max-h-120 overflow-x-auto border border-slate-200 rounded-2xl relative min-h-60 shadow-inner bg-white custom-scrollbar-light">
                  {state.loadStates.dns && !state.loadStates.bulk ? (
                    <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 gap-3"><span className="loading loading-spinner loading-lg text-indigo-600"></span><p className="text-[10px] font-black uppercase text-indigo-900 tracking-[0.2em] animate-pulse">{t.syncing_dns}</p></div>
                  ) : (
-                   <table className="table table-xs w-full min-w-180 border-collapse text-left">
+                   <table className="table table-xs w-full min-w-[700px] border-collapse text-left">
                       <thead className="bg-slate-100 text-slate-900 sticky top-0 z-10 shadow-sm"><tr className="font-black text-[10px] uppercase tracking-widest border-b border-slate-200">
-                        <th className="px-5 py-4 w-12">
-                          <button onClick={() => state.toggleSelectAllDns(filteredDns)} className="flex items-center justify-center hover:text-indigo-600 transition-colors">
+                        <th className="px-5 py-4 w-12 text-center">
+                          <button onClick={() => state.toggleSelectAllDns(filteredDns)} className="flex items-center justify-center hover:text-indigo-600 transition-colors mx-auto">
                             {state.selectedDnsIds.size === filteredDns.length && filteredDns.length > 0 ? <CheckSquare className="size-4" /> : <Square className="size-4" />}
                           </button>
                         </th>
@@ -156,8 +140,8 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                       <tbody>
                         {filteredDns.map((r: any) => (
                           <tr key={r.id} className={`hover:bg-indigo-50/50 border-b border-slate-100 last:border-0 transition-colors ${state.editingRecordId === r.id ? 'bg-amber-50/30' : ''} ${state.selectedDnsIds.has(r.id) ? 'bg-indigo-50' : ''}`}>
-                            <td className="px-5 py-4">
-                              <button onClick={() => state.toggleSelectDns(r.id)} className={`transition-colors ${state.selectedDnsIds.has(r.id) ? 'text-indigo-600' : 'text-slate-300'}`}>
+                            <td className="px-5 py-4 text-center">
+                              <button onClick={() => state.toggleSelectDns(r.id)} className={`transition-colors mx-auto flex items-center justify-center ${state.selectedDnsIds.has(r.id) ? 'text-indigo-600' : 'text-slate-300'}`}>
                                 {state.selectedDnsIds.has(r.id) ? <CheckSquare className="size-4" /> : <Square className="size-4" />}
                               </button>
                             </td>
@@ -187,8 +171,8 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
-               <div className="bg-slate-900 rounded-2xl p-7 shadow-2xl shadow-slate-900/40 space-y-6 flex flex-col min-h-55 relative overflow-hidden text-white">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pb-8">
+               <div className="bg-slate-900 rounded-2xl p-6 sm:p-7 shadow-2xl shadow-slate-900/40 space-y-6 flex flex-col min-h-55 relative overflow-hidden text-white">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/5 blur-3xl rounded-full" />
                   <div className="flex items-center gap-3 relative z-10"><div className="size-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20 shadow-inner"><Award className="size-5" /></div><h3 className="font-black text-white text-sm tracking-widest uppercase">{t.ca_deploy}</h3></div>
                   {state.loadStates.cert ? <div className="flex-1 flex flex-col items-center justify-center gap-3"><span className="loading loading-spinner loading-lg text-indigo-500"></span></div> : <>
@@ -196,7 +180,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                       <button onClick={state.handleApplyCA} disabled={state.loadStates.ca} className="btn btn-primary btn-md w-full rounded-xl font-black uppercase text-[10px] h-12 text-white hover:bg-indigo-700">{t.update_ca}</button>
                     </>}
                </div>
-               <div className="bg-slate-900 rounded-2xl p-7 shadow-2xl shadow-slate-900/40 space-y-6 flex flex-col min-h-55 relative overflow-hidden text-white">
+               <div className="bg-slate-900 rounded-2xl p-6 sm:p-7 shadow-2xl shadow-slate-900/40 space-y-6 flex flex-col min-h-55 relative overflow-hidden text-white">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full" />
                   <div className="flex items-center gap-3 relative z-10"><div className="size-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20 shadow-inner"><Shield className="size-5" /></div><h3 className="font-black text-white text-sm tracking-widest uppercase">{t.enc_layer}</h3></div>
                   {state.loadStates.cert ? <div className="flex-1 flex flex-col items-center justify-center gap-3"><span className="loading loading-spinner loading-lg text-indigo-500"></span></div> : <>
@@ -207,7 +191,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
             </div>
           </>
         ) : (
-          <div className="h-full min-h-120 bg-white border border-slate-200 border-dashed rounded-3xl flex flex-col items-center justify-center p-16 text-center opacity-50 shadow-inner"><CloudCog className="size-12 text-slate-300 mb-4 animate-bounce" /><h3 className="text-[11px] font-black uppercase tracking-widest text-slate-500">{t.init_context}</h3></div>
+          <div className="h-full min-h-[400px] bg-white border border-slate-200 border-dashed rounded-3xl flex flex-col items-center justify-center p-8 sm:p-16 text-center opacity-50 shadow-inner"><CloudCog className="size-10 sm:size-12 text-slate-300 mb-4 animate-bounce" /><h3 className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-500">{t.init_context}</h3></div>
         )}
       </div>
     </div>
