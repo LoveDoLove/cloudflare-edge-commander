@@ -3,7 +3,7 @@
 import React from 'react';
 import { 
   LayoutDashboard, CloudCog, Network, Github, Terminal, 
-  BookOpen, Layers, Info, Lock, Scale 
+  BookOpen, Layers, Info, Lock, Scale, Menu, X 
 } from 'lucide-react';
 
 import { useCloudflareManager } from '@/hooks/useCloudflareManager';
@@ -14,7 +14,7 @@ import { DnsDocsView } from '@/components/views/DnsDocsView';
 import { AboutView } from '@/components/views/AboutViews';
 import { PrivacyView } from '@/components/views/PrivacyViews';
 import { TermsView } from '@/components/views/TermsViews';
-import { DeleteConfirmationModal, ConsoleDrawer } from '@/components/Overlays';
+import { DeleteConfirmationModal, BulkDeleteModal, ConsoleDrawer } from '@/components/Overlays';
 
 const utils = {
   ipv6ToArpa: (ipv6: string) => {
@@ -67,26 +67,9 @@ export default function App() {
   const state = useCloudflareManager();
   const { t } = state;
 
-  return (
-    <div className="flex h-screen font-sans overflow-hidden bg-slate-50 text-slate-900">
-      
-      <aside className="w-60 bg-slate-900 flex flex-col shrink-0 relative z-20 shadow-2xl">
-        <div className="p-6">
-          <div className="flex items-center gap-3">
-            <div className="size-10 bg-linear-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-950/40 border border-orange-400/20">
-              <Layers className="size-5 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <div className="text-white font-black tracking-widest text-[11px] uppercase leading-none">Edge</div>
-              <div className="text-orange-400 font-black tracking-widest text-[9px] uppercase leading-none mt-1">Commander</div>
-            </div>
-          </div>
-          <div className="mt-4 px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-lg">
-            <p className="text-[7px] font-black text-orange-500 uppercase tracking-[0.2em] text-center">Cloudflare Edition</p>
-          </div>
-        </div>
-
-        <div className="px-4 py-2">
+  const NavigationItems = () => (
+    <>
+      <div className="px-4 py-2">
            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-2">{t.core_services}</p>
            <nav className="space-y-1">
             {[
@@ -96,7 +79,7 @@ export default function App() {
               { id: 'docs', label: t.nav_docs, icon: BookOpen }
             ].map(tab => (
               <button 
-                key={tab.id} onClick={() => state.setActiveTab(tab.id as any)}
+                key={tab.id} onClick={() => { state.setActiveTab(tab.id as any); state.setIsSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${state.activeTab === tab.id ? 'bg-orange-600 text-white shadow-xl shadow-orange-950/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white active:text-white'}`}
               >
                 <tab.icon className="size-4" /> {tab.label}
@@ -114,7 +97,7 @@ export default function App() {
               { id: 'terms', label: t.nav_terms, icon: Scale }
             ].map(tab => (
               <button 
-                key={tab.id} onClick={() => state.setActiveTab(tab.id as any)}
+                key={tab.id} onClick={() => { state.setActiveTab(tab.id as any); state.setIsSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${state.activeTab === tab.id ? 'bg-white/10 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
               >
                 <tab.icon className="size-4" /> {tab.label}
@@ -122,6 +105,41 @@ export default function App() {
             ))}
           </nav>
         </div>
+    </>
+  );
+
+  return (
+    <div className="flex h-screen font-sans overflow-hidden bg-slate-50 text-slate-900 relative">
+      
+      {/* Mobile Sidebar Overlay */}
+      {state.isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          onClick={() => state.setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Drawer */}
+      <aside className={`
+        fixed inset-y-0 left-0 w-64 bg-slate-900 flex flex-col shrink-0 z-50 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
+        ${state.isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+       shadow-2xl lg:shadow-none`}>
+        <div className="p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="size-10 bg-linear-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-950/40 border border-orange-400/20">
+              <Layers className="size-5 text-white" />
+            </div>
+            <div className="flex flex-col">
+              <div className="text-white font-black tracking-widest text-[11px] uppercase leading-none">Edge</div>
+              <div className="text-orange-400 font-black tracking-widest text-[9px] uppercase leading-none mt-1">Commander</div>
+            </div>
+          </div>
+          <button onClick={() => state.setIsSidebarOpen(false)} className="lg:hidden text-slate-400 p-2">
+            <X className="size-5" />
+          </button>
+        </div>
+
+        <NavigationItems />
 
         <div className="p-4 mt-auto space-y-4 border-t border-slate-800">
           <div className="flex bg-slate-800 rounded-xl p-1">
@@ -132,25 +150,34 @@ export default function App() {
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 shadow-sm">
-          <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
-            {state.activeTab === 'auth' && t.auth_title}
-            {state.activeTab === 'edge' && t.infra_title}
-            {state.activeTab === 'utils' && t.lab_title}
-            {state.activeTab === 'docs' && t.docs_title}
-            {state.activeTab === 'about' && t.about_title}
-            {state.activeTab === 'privacy' && t.privacy_title}
-            {state.activeTab === 'terms' && t.terms_title}
-          </h2>
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 shrink-0 shadow-sm">
+          <div className="flex items-center gap-4 min-w-0">
+            <button 
+              onClick={() => state.setIsSidebarOpen(true)}
+              className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+            >
+              <Menu className="size-5" />
+            </button>
+            <h2 className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-slate-400 truncate">
+              {state.activeTab === 'auth' && t.auth_title}
+              {state.activeTab === 'edge' && t.infra_title}
+              {state.activeTab === 'utils' && t.lab_title}
+              {state.activeTab === 'docs' && t.docs_title}
+              {state.activeTab === 'about' && t.about_title}
+              {state.activeTab === 'privacy' && t.privacy_title}
+              {state.activeTab === 'terms' && t.terms_title}
+            </h2>
+          </div>
           <button 
             onClick={() => state.setIsConsoleOpen(!state.isConsoleOpen)}
-            className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border text-[10px] font-black uppercase transition-all shadow-sm ${state.isConsoleOpen ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-900 active:bg-slate-50'}`}
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border text-[9px] sm:text-[10px] font-black uppercase transition-all shadow-sm ${state.isConsoleOpen ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-900 active:bg-slate-50'}`}
           >
-            <Terminal className="size-3.5" /> {state.isConsoleOpen ? t.monitor_close : t.monitor_open}
+            <Terminal className="size-3.5" /> 
+            <span className="hidden xs:inline">{state.isConsoleOpen ? t.monitor_close : t.monitor_open}</span>
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar-light">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar-light">
           <div className="max-w-6xl mx-auto transition-all duration-500">
             {state.activeTab === 'auth' && <ConnectivityView state={state} />}
             {state.activeTab === 'edge' && <EdgeManagerView state={state} />}
@@ -163,6 +190,7 @@ export default function App() {
         </div>
 
         {state.recordToDelete && <DeleteConfirmationModal state={state} record={state.recordToDelete} onCancel={() => state.setRecordToDelete(null)} onConfirm={state.handleDeleteDnsRecord} />}
+        {state.showBulkDeleteConfirm && <BulkDeleteModal state={state} count={state.selectedDnsIds.size} onCancel={() => state.setShowBulkDeleteConfirm(false)} onConfirm={state.handleBulkDelete} loading={state.loadStates.bulk} />}
         <ConsoleDrawer state={state} isOpen={state.isConsoleOpen} onClose={() => state.setIsConsoleOpen(false)} logs={state.logs} logEndRef={state.logEndRef} />
       </main>
 

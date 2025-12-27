@@ -1,350 +1,530 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-
-export type Language = 'en' | 'zh';
+import { useState, useEffect, useRef } from "react";
+import { translations, Language } from "@/i18n/translations";
 
 export function useCloudflareManager() {
-  const [lang, setLangState] = useState<Language>('en');
-  const [activeTab, setActiveTab] = useState<'auth' | 'edge' | 'utils' | 'docs' | 'about' | 'privacy' | 'terms'>('auth');
+  const [lang, setLangState] = useState<Language>("en");
+  const [activeTab, setActiveTab] = useState<
+    "auth" | "edge" | "utils" | "docs" | "about" | "privacy" | "terms"
+  >("auth");
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
-  
-  // New: State for drawer height to allow persistence
   const [consoleHeight, setConsoleHeight] = useState(280);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const [authEmail, setAuthEmail] = useState('');
-  const [globalKey, setGlobalKey] = useState('');
-  const [zoneId, setZoneId] = useState('');
-  const [ipv6Input, setIpv6Input] = useState('2001:db8::/32');
-  const [labResults, setLabResults] = useState<{ip: string, arpa: string}[]>([]);
-  
+  const [authEmail, setAuthEmail] = useState("");
+  const [globalKey, setGlobalKey] = useState("");
+  const [zoneId, setZoneId] = useState("");
+  const [ipv6Input, setIpv6Input] = useState("2001:db8::/32");
+  const [labResults, setLabResults] = useState<{ ip: string; arpa: string }[]>(
+    []
+  );
+
   const [loadStates, setLoadStates] = useState({
-    inv: false, zone: false, cert: false, addDomain: false, dns: false, ca: false, ssl: false
+    inv: false,
+    zone: false,
+    cert: false,
+    addDomain: false,
+    dns: false,
+    ca: false,
+    ssl: false,
+    bulk: false,
   });
-  
-  const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
-  const [logs, setLogs] = useState<{ msg: string, type: string, time: string }[]>([]);
-  
+
+  const [status, setStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+  const [logs, setLogs] = useState<
+    { msg: string; type: string; time: string }[]
+  >([]);
+
   const [accounts, setAccounts] = useState<any[]>([]);
   const [zones, setZones] = useState<any[]>([]);
   const [dnsRecords, setDnsRecords] = useState<any[]>([]);
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
-  const [selectedAccountName, setSelectedAccountName] = useState<string | null>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    null
+  );
+  const [selectedAccountName, setSelectedAccountName] = useState<string | null>(
+    null
+  );
   const [selectedZoneName, setSelectedZoneName] = useState<string | null>(null);
-  
-  const [caProvider, setCaProvider] = useState<string>('google');
-  const [sslMode, setSslMode] = useState<string>('strict');
-  const [newDomainName, setNewDomainName] = useState('');
-  const [newDns, setNewDns] = useState({ type: 'A', name: '', content: '', ttl: 1, proxied: false });
 
+  const [caProvider, setCaProvider] = useState<string>("google");
+  const [sslMode, setSslMode] = useState<string>("strict");
+  const [newDomainName, setNewDomainName] = useState("");
+  const [newDns, setNewDns] = useState({
+    type: "A",
+    name: "",
+    content: "",
+    ttl: 1,
+    proxied: false,
+  });
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDnsIds, setSelectedDnsIds] = useState<Set<string>>(new Set());
   const [recordToDelete, setRecordToDelete] = useState<any | null>(null);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<any | null>(null);
 
+  const [propResults, setPropResults] = useState<Record<string, any>>({});
+
   const logEndRef = useRef<HTMLDivElement>(null);
 
-  // Persistence logic for Language
   useEffect(() => {
-    const savedLang = localStorage.getItem('commander_pref_lang');
-    if (savedLang === 'en' || savedLang === 'zh') {
+    const savedLang = localStorage.getItem("commander_pref_lang");
+    if (savedLang === "en" || savedLang === "zh")
       setLangState(savedLang as Language);
-    }
   }, []);
 
   const setLang = (newLang: Language) => {
     setLangState(newLang);
-    localStorage.setItem('commander_pref_lang', newLang);
+    localStorage.setItem("commander_pref_lang", newLang);
   };
 
-  const dict = {
-    en: {
-      core_services: "Core Services",
-      legal_compliance: "Project & Legal",
-      nav_conn: "Connection",
-      nav_edge: "Edge Manager",
-      nav_lab: "Network Lab",
-      nav_docs: "DNS Guide",
-      nav_about: "About Us",
-      nav_privacy: "Privacy Policy",
-      nav_terms: "Terms of Service",
-      repo: "Repository",
-      monitor_open: "Process Monitor",
-      monitor_close: "Close Monitor",
-      auth_title: "Connectivity & Access",
-      infra_title: "Infrastructure Management",
-      lab_title: "Network Intelligence Lab",
-      docs_title: "DNS Reference Registry",
-      about_title: "Project Intelligence",
-      privacy_title: "Data Sovereignty",
-      terms_title: "Service Agreement",
-      api_creds: "API Credentials",
-      acc_email: "Account Email",
-      global_key: "Global API Key",
-      establish_session: "Establish Session",
-      active_contexts: "Active Contexts",
-      awaiting_auth: "Awaiting Auth",
-      zone_registry: "Zone Registry",
-      add_domain: "Add domain.com...",
-      add_btn: "Add",
-      select_account: "Select Account First",
-      dns_registry: "Distributed DNS Registry",
-      active_zone: "Active Zone",
-      syncing_dns: "Syncing DNS Records...",
-      create: "Create",
-      proxy: "Proxy",
-      registry_empty: "Registry Empty",
-      ca_deploy: "CA Deployment",
-      authority: "Authority",
-      update_ca: "Update CA",
-      enc_layer: "Encryption Layer",
-      sec_level: "Security Level",
-      enforce_enc: "Enforce Encryption",
-      init_context: "Initialize Zone Context",
-      net_lab: "Network Lab",
-      intel_engine: "Intelligence Engine",
-      ipv6_block: "IPv6 Address / Block",
-      analyze: "Analyze",
-      randomize: "Randomize",
-      output_reg: "Lab Output Registry",
-      system_idle: "System Idle",
-      confirm_del: "Confirm Deletion",
-      del_desc: "Permanently remove this record? This action cannot be reversed.",
-      cancel: "Cancel",
-      delete: "Delete Record",
-      live_logs: "Live Node Logs",
-      waiting_events: "Waiting for events...",
-      copy_ip: "Copy IP",
-      copy_arpa: "Copy ARPA",
-      mapping: "Reverse Mapping",
-      gen_node: "Generated Node",
-      success_acc: "Sync Success: {n} accounts found.",
-      found_zones: "Found {n} zones.",
-      sync_done: "Sync complete.",
-      update_done: "Update successful."
-    },
-    zh: {
-      core_services: "核心服务",
-      legal_compliance: "项目与法律",
-      nav_conn: "连接设置",
-      nav_edge: "边缘管理",
-      nav_lab: "网络实验室",
-      nav_docs: "DNS 指南",
-      nav_about: "关于我们",
-      nav_privacy: "隐私政策",
-      nav_terms: "服务条款",
-      repo: "源码仓库",
-      monitor_open: "运行监控",
-      monitor_close: "关闭监控",
-      auth_title: "连接与访问控制",
-      infra_title: "基础设施管理",
-      lab_title: "网络情报实验室",
-      docs_title: "DNS 参考注册表",
-      about_title: "项目情报中心",
-      privacy_title: "数据主权声明",
-      terms_title: "服务协议",
-      api_creds: "API 凭据",
-      acc_email: "账号邮箱",
-      global_key: "全局 API 密钥",
-      establish_session: "建立会话",
-      active_contexts: "活跃上下文",
-      awaiting_auth: "等待认证",
-      zone_registry: "区域注册表",
-      add_domain: "添加域名 domain.com...",
-      add_btn: "添加",
-      select_account: "请先选择账号",
-      dns_registry: "分布式 DNS 注册表",
-      active_zone: "活跃区域",
-      syncing_dns: "正在同步 DNS 记录...",
-      create: "创建",
-      proxy: "代理",
-      registry_empty: "注册表为空",
-      ca_deploy: "CA 证书部署",
-      authority: "证书颁发机构",
-      update_ca: "更新 CA",
-      enc_layer: "加密层级",
-      sec_level: "安全级别",
-      enforce_enc: "强制加密",
-      init_context: "初始化区域上下文",
-      net_lab: "网络实验室",
-      intel_engine: "情报引擎",
-      ipv6_block: "IPv6 地址 / 网段",
-      analyze: "分析",
-      randomize: "随机化",
-      output_reg: "实验输出注册表",
-      system_idle: "系统空闲",
-      confirm_del: "确认删除",
-      del_desc: "永久移除此记录？此操作无法撤销。",
-      cancel: "取消",
-      delete: "删除记录",
-      live_logs: "实时节点日志",
-      waiting_events: "等待事件...",
-      copy_ip: "复制 IP",
-      copy_arpa: "复制 ARPA",
-      mapping: "反向映射",
-      gen_node: "生成的节点",
-      success_acc: "同步成功：找到 {n} 个账号。",
-      found_zones: "找到 {n} 个区域。",
-      sync_done: "同步完成。",
-      update_done: "更新成功。"
-    }
-  };
-
-  const t = dict[lang];
+  const t = translations[lang];
 
   useEffect(() => {
-    if (isConsoleOpen) { logEndRef.current?.scrollIntoView({ behavior: "smooth" }); }
+    if (isConsoleOpen)
+      logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs, isConsoleOpen]);
 
-  const addLog = (msg: string, type = 'info') => {
-    setLogs(prev => [...prev, { msg, type, time: new Date().toLocaleTimeString() }]);
+  const addLog = (msg: string, type = "info") => {
+    setLogs((prev) => [
+      ...prev,
+      { msg, type, time: new Date().toLocaleTimeString() },
+    ]);
   };
 
-  const fetchCF = async (endpoint: string, method = 'GET', body?: any): Promise<any> => {
-    const response = await fetch('/api/cloudflare', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint, email: authEmail, key: globalKey, method, body })
+  const fetchCF = async (
+    endpoint: string,
+    method = "GET",
+    body?: any
+  ): Promise<any> => {
+    const response = await fetch("/api/cloudflare", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        endpoint,
+        email: authEmail,
+        key: globalKey,
+        method,
+        body,
+      }),
     });
-    const data = await response.json() as any;
-    if (!data.success) throw new Error(data.errors?.[0]?.message || 'API Request Failed');
+    const data = (await response.json()) as any;
+    if (!data.success)
+      throw new Error(data.errors?.[0]?.message || "API Request Failed");
     return data.result;
   };
 
+  const sanitizeContent = (content: string, type: string) => {
+    if (!content) return "";
+    let clean = content;
+    if (type === "TXT") {
+      clean = clean.replace(/\\"/g, '"');
+      while (
+        (clean.startsWith('"') && clean.endsWith('"')) ||
+        (clean.startsWith("'") && clean.endsWith("'"))
+      ) {
+        clean = clean.substring(1, clean.length - 1);
+      }
+    }
+    return clean;
+  };
+
   const handleFetchAccounts = async () => {
-    if (!authEmail || !globalKey) { setStatus({ type: 'error', message: 'Credentials required.' }); return; }
-    setLoadStates(s => ({ ...s, inv: true }));
-    addLog('Syncing accounts...', 'info');
+    if (!authEmail || !globalKey) return;
+    setLoadStates((s) => ({ ...s, inv: true }));
     try {
-      const data = await fetchCF('accounts') as any[];
+      const data = await fetchCF("accounts");
       setAccounts(data);
-      addLog(t.success_acc.replace('{n}', data.length.toString()), 'success');
-    } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
-    finally { setLoadStates(s => ({ ...s, inv: false })); }
+      addLog(t.success_acc.replace("{n}", data.length.toString()), "success");
+    } catch (err: any) {
+      addLog(`Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, inv: false }));
+    }
   };
 
   const handleSelectAccount = async (accId: string, accName: string) => {
-    setSelectedAccountId(accId); setSelectedAccountName(accName);
-    setZones([]); setLoadStates(s => ({ ...s, zone: true }));
-    addLog(`Loading zones for ${accName}...`, 'info');
+    setSelectedAccountId(accId);
+    setSelectedAccountName(accName);
+    setZones([]);
+    setLoadStates((s) => ({ ...s, zone: true }));
     try {
-      const data = await fetchCF(`zones?account.id=${accId}`) as any[];
+      const data = await fetchCF(`zones?account.id=${accId}`);
       setZones(data);
-      addLog(t.found_zones.replace('{n}', data.length.toString()), 'success');
-    } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
-    finally { setLoadStates(s => ({ ...s, zone: false })); }
+      addLog(t.found_zones.replace("{n}", data.length.toString()), "success");
+    } catch (err: any) {
+      addLog(`Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, zone: false }));
+    }
   };
 
   const handleSelectZone = async (id: string, name: string) => {
-    setZoneId(id); setSelectedZoneName(name); setDnsRecords([]); setEditingRecordId(null);
-    setLoadStates(s => ({ ...s, cert: true, dns: true }));
-    addLog(`Context: ${name}...`, 'info');
+    setZoneId(id);
+    setSelectedZoneName(name);
+    setDnsRecords([]);
+    setLoadStates((s) => ({ ...s, cert: true, dns: true }));
     try {
       try {
-        const universalSettings = await fetchCF(`zones/${id}/ssl/universal/settings`);
-        if (universalSettings?.certificate_authority) setCaProvider(universalSettings.certificate_authority);
-        const sslSettings = await fetchCF(`zones/${id}/settings/ssl`);
-        if (sslSettings?.value) setSslMode(sslSettings.value);
-      } catch (e: any) {}
-      try {
-        const records = await fetchCF(`zones/${id}/dns_records`) as any[];
-        setDnsRecords(records || []);
-      } catch (e: any) {}
-      addLog(t.sync_done, 'success');
-    } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
-    finally { setLoadStates(s => ({ ...s, cert: false, dns: false })); }
+        const universal = await fetchCF(`zones/${id}/ssl/universal/settings`);
+        if (universal?.certificate_authority)
+          setCaProvider(universal.certificate_authority);
+        const ssl = await fetchCF(`zones/${id}/settings/ssl`);
+        if (ssl?.value) setSslMode(ssl.value);
+      } catch (e) {}
+      const records = await fetchCF(`zones/${id}/dns_records`);
+      setDnsRecords(records || []);
+      addLog(t.sync_done, "success");
+    } catch (err: any) {
+      addLog(`Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, cert: false, dns: false }));
+    }
   };
 
   const handleAddDnsRecord = async () => {
     if (!zoneId || !newDns.name || !newDns.content) return;
-    setLoadStates(s => ({ ...s, dns: true }));
-    addLog(`Creating ${newDns.type} record...`, 'info');
+    setLoadStates((s) => ({ ...s, dns: true }));
     try {
-      await fetchCF(`zones/${zoneId}/dns_records`, 'POST', newDns);
-      addLog(`Created: ${newDns.name}`, 'success');
-      setNewDns({ type: 'A', name: '', content: '', ttl: 1, proxied: false });
-      const records = await fetchCF(`zones/${zoneId}/dns_records`) as any[];
+      const sanitized = {
+        ...newDns,
+        content: sanitizeContent(newDns.content, newDns.type),
+      };
+      await fetchCF(`zones/${zoneId}/dns_records`, "POST", sanitized);
+      addLog(`Created: ${newDns.name}`, "success");
+      setNewDns({ type: "A", name: "", content: "", ttl: 1, proxied: false });
+      const records = await fetchCF(`zones/${zoneId}/dns_records`);
       setDnsRecords(records);
-    } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
-    finally { setLoadStates(s => ({ ...s, dns: false })); }
-  };
-
-  const handleDeleteDnsRecord = async () => {
-    if (!zoneId || !recordToDelete) return;
-    setLoadStates(s => ({ ...s, dns: true }));
-    addLog(`Deleting ${recordToDelete.name}...`, 'info');
-    try {
-      await fetchCF(`zones/${zoneId}/dns_records/${recordToDelete.id}`, 'DELETE');
-      addLog(t.update_done, 'success');
-      const records = await fetchCF(`zones/${zoneId}/dns_records`) as any[];
-      setDnsRecords(records);
-    } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
-    finally { setLoadStates(s => ({ ...s, dns: false })); setRecordToDelete(null); }
+    } catch (err: any) {
+      addLog(`Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, dns: false }));
+    }
   };
 
   const handleSaveEdit = async () => {
     if (!zoneId || !editingRecordId || !editFormData) return;
-    setLoadStates(s => ({ ...s, dns: true }));
-    addLog(`Updating record: ${editFormData.name}...`, 'info');
+    setLoadStates((s) => ({ ...s, dns: true }));
     try {
-      await fetchCF(`zones/${zoneId}/dns_records/${editingRecordId}`, 'PATCH', {
-        type: editFormData.type, name: editFormData.name, content: editFormData.content, proxied: editFormData.proxied
-      });
-      addLog(t.update_done, 'success');
-      const records = await fetchCF(`zones/${zoneId}/dns_records`) as any[];
+      const payload = {
+        type: editFormData.type,
+        name: editFormData.name,
+        content: sanitizeContent(editFormData.content, editFormData.type),
+        proxied: editFormData.proxied,
+        ttl: editFormData.ttl,
+        priority: editFormData.priority,
+      };
+      await fetchCF(
+        `zones/${zoneId}/dns_records/${editingRecordId}`,
+        "PATCH",
+        payload
+      );
+      const records = await fetchCF(`zones/${zoneId}/dns_records`);
       setDnsRecords(records);
-      setEditingRecordId(null); setEditFormData(null);
-    } catch (err: any) { addLog(`Update Error: ${err.message}`, 'error'); } 
-    finally { setLoadStates(s => ({ ...s, dns: false })); }
+      setEditingRecordId(null);
+      addLog(t.update_done, "success");
+    } catch (err: any) {
+      addLog(`Update Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, dns: false }));
+    }
   };
 
   const handleApplyCA = async () => {
     if (!zoneId) return;
-    setLoadStates(s => ({ ...s, ca: true }));
-    addLog(`Updating CA...`, 'info');
+    setLoadStates((s) => ({ ...s, ca: true }));
     try {
-      await fetchCF(`zones/${zoneId}/ssl/universal/settings`, 'PATCH', { certificate_authority: caProvider });
-      addLog(t.update_done, 'success');
-      setStatus({ type: 'success', message: `CA updated.` });
-    } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
-    finally { setLoadStates(s => ({ ...s, ca: false })); }
+      await fetchCF(`zones/${zoneId}/ssl/universal/settings`, "PATCH", {
+        certificate_authority: caProvider,
+      });
+      addLog(t.update_done, "success");
+    } catch (err: any) {
+      addLog(`Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, ca: false }));
+    }
   };
 
   const handleApplySSL = async () => {
     if (!zoneId) return;
-    setLoadStates(s => ({ ...s, ssl: true }));
-    addLog(`Updating Encryption...`, 'info');
+    setLoadStates((s) => ({ ...s, ssl: true }));
     try {
-      await fetchCF(`zones/${zoneId}/settings/ssl`, 'PATCH', { value: sslMode });
-      addLog(t.update_done, 'success');
-      setStatus({ type: 'success', message: `SSL level updated.` });
-    } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
-    finally { setLoadStates(s => ({ ...s, ssl: false })); }
+      await fetchCF(`zones/${zoneId}/settings/ssl`, "PATCH", {
+        value: sslMode,
+      });
+      addLog(t.update_done, "success");
+    } catch (err: any) {
+      addLog(`Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, ssl: false }));
+    }
   };
 
   const handleAddDomain = async () => {
     if (!selectedAccountId || !newDomainName) return;
-    setLoadStates(s => ({ ...s, addDomain: true }));
-    addLog(`Adding ${newDomainName}...`, 'info');
+    setLoadStates((s) => ({ ...s, addDomain: true }));
     try {
-      await fetchCF('zones', 'POST', { name: newDomainName, account: { id: selectedAccountId } });
-      addLog(`Success: ${newDomainName} registered.`, 'success');
-      setNewDomainName('');
-      handleSelectAccount(selectedAccountId, selectedAccountName || '');
-    } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
-    finally { setLoadStates(s => ({ ...s, addDomain: false })); }
+      await fetchCF("zones", "POST", {
+        name: newDomainName,
+        account: { id: selectedAccountId },
+      });
+      addLog(`Success: ${newDomainName} registered.`, "success");
+      setNewDomainName("");
+      handleSelectAccount(selectedAccountId, selectedAccountName || "");
+    } catch (err: any) {
+      addLog(`Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, addDomain: false }));
+    }
+  };
+
+  const handleExportDns = () => {
+    const blob = new Blob([JSON.stringify(dnsRecords, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dns-${selectedZoneName}.json`;
+    a.click();
+    addLog(`Exported ${dnsRecords.length} records.`, "success");
+  };
+
+  const handleImportDns = async (file: File) => {
+    if (!zoneId) return;
+    setLoadStates((s) => ({ ...s, dns: true }));
+    addLog(`Importing ${file.name}...`, "info");
+    try {
+      const text = await file.text();
+      let imported: any[] = [];
+      if (file.name.endsWith(".json")) {
+        imported = JSON.parse(text);
+      } else {
+        const rows = text.split("\n").slice(1);
+        imported = rows
+          .filter((r) => r.trim())
+          .map((row) => {
+            const cols =
+              row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || row.split(",");
+            return {
+              type: cols[0]?.replace(/"/g, "").trim(),
+              name: cols[1]?.replace(/"/g, "").trim(),
+              content: cols[2]?.replace(/"/g, "").trim(),
+              proxied: cols[3]?.toLowerCase().includes("true"),
+              ttl: parseInt(cols[4]) || 1,
+              priority: parseInt(cols[5]) || undefined,
+            };
+          });
+      }
+
+      let s = 0,
+        f = 0;
+      for (const r of imported) {
+        if (r.meta?.read_only || r.meta?.email_routing) continue;
+        try {
+          const payload: any = {
+            type: r.type,
+            name: r.name,
+            content: sanitizeContent(r.content, r.type),
+            proxied: !!r.proxied,
+            ttl: r.ttl || 1,
+          };
+          if (r.priority !== undefined) payload.priority = r.priority;
+          await fetchCF(`zones/${zoneId}/dns_records`, "POST", payload);
+          s++;
+        } catch {
+          f++;
+        }
+      }
+      addLog(
+        t.import_success
+          .replace("{s}", s.toString())
+          .replace("{f}", f.toString()),
+        "success"
+      );
+      const records = await fetchCF(`zones/${zoneId}/dns_records`);
+      setDnsRecords(records);
+    } catch (err) {
+      addLog(t.import_error, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, dns: false }));
+    }
+  };
+
+  const checkPropagation = async (record: any) => {
+    setPropResults((prev) => ({ ...prev, [record.id]: { loading: true } }));
+    const resolvers = [
+      {
+        name: "Google",
+        url: `https://dns.google/resolve?name=${record.name}&type=${record.type}`,
+      },
+      {
+        name: "Cloudflare",
+        url: `https://cloudflare-dns.com/dns-query?name=${record.name}&type=${record.type}`,
+        headers: { Accept: "application/dns-json" },
+      },
+      {
+        name: "Alibaba",
+        url: `https://dns.alidns.com/resolve?name=${record.name}&type=${record.type}`,
+      },
+    ];
+
+    try {
+      const checks = await Promise.all(
+        resolvers.map(async (res) => {
+          try {
+            const r = await fetch(res.url, { headers: res.headers });
+            const json: any = await r.json();
+            const answer = json.Answer?.[0]?.data || "NXDOMAIN";
+            const match =
+              answer.toLowerCase().includes(record.content.toLowerCase()) ||
+              record.content
+                .toLowerCase()
+                .includes(answer.toLowerCase().replace(/\.$/, ""));
+            return {
+              name: res.name,
+              status: match ? "success" : "pending",
+              value: answer,
+            };
+          } catch {
+            return { name: res.name, status: "error", value: "Timeout" };
+          }
+        })
+      );
+      setPropResults((prev) => ({
+        ...prev,
+        [record.id]: { loading: false, checks },
+      }));
+    } catch {
+      setPropResults((prev) => ({
+        ...prev,
+        [record.id]: { loading: false, error: true },
+      }));
+    }
+  };
+
+  const handleDeleteDnsRecord = async () => {
+    if (!zoneId || !recordToDelete) return;
+    setLoadStates((s) => ({ ...s, dns: true }));
+    try {
+      await fetchCF(
+        `zones/${zoneId}/dns_records/${recordToDelete.id}`,
+        "DELETE"
+      );
+      setDnsRecords((prev) => prev.filter((r) => r.id !== recordToDelete.id));
+      addLog(t.update_done, "success");
+    } catch (e: any) {
+      addLog(e.message, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, dns: false }));
+      setRecordToDelete(null);
+    }
   };
 
   return {
-    lang, setLang, t,
-    activeTab, setActiveTab, isConsoleOpen, setIsConsoleOpen,
-    consoleHeight, setConsoleHeight,
-    authEmail, setAuthEmail, globalKey, setGlobalKey, handleFetchAccounts,
-    accounts, selectedAccountId, handleSelectAccount,
-    zones, zoneId, selectedZoneName, handleSelectZone,
-    dnsRecords, newDns, setNewDns, handleAddDnsRecord, recordToDelete, setRecordToDelete, handleDeleteDnsRecord,
-    editingRecordId, setEditingRecordId, editFormData, setEditFormData, handleSaveEdit,
-    caProvider, setCaProvider, handleApplyCA, sslMode, setSslMode, handleApplySSL,
-    ipv6Input, setIpv6Input, labResults, setLabResults, loadStates, status, logs,
-    setNewDomainName, newDomainName, addLog, logEndRef, handleAddDomain
+    lang,
+    setLang,
+    t,
+    activeTab,
+    setActiveTab,
+    isConsoleOpen,
+    setIsConsoleOpen,
+    consoleHeight,
+    setConsoleHeight,
+    isSidebarOpen,
+    setIsSidebarOpen,
+    authEmail,
+    setAuthEmail,
+    globalKey,
+    setGlobalKey,
+    handleFetchAccounts,
+    accounts,
+    selectedAccountId,
+    handleSelectAccount,
+    zones,
+    zoneId,
+    selectedZoneName,
+    handleSelectZone,
+    dnsRecords,
+    newDns,
+    setNewDns,
+    handleAddDnsRecord,
+    recordToDelete,
+    setRecordToDelete,
+    handleDeleteDnsRecord,
+    editingRecordId,
+    setEditingRecordId,
+    editFormData,
+    setEditFormData,
+    handleSaveEdit,
+    caProvider,
+    setCaProvider,
+    handleApplyCA,
+    sslMode,
+    setSslMode,
+    handleApplySSL,
+    ipv6Input,
+    setIpv6Input,
+    labResults,
+    setLabResults,
+    loadStates,
+    status,
+    logs,
+    setNewDomainName,
+    newDomainName,
+    addLog,
+    logEndRef,
+    handleAddDomain,
+    searchTerm,
+    setSearchTerm,
+    selectedDnsIds,
+    toggleSelectDns: (id: string) =>
+      setSelectedDnsIds((prev) => {
+        const n = new Set(prev);
+        n.has(id) ? n.delete(id) : n.add(id);
+        return n;
+      }),
+    toggleSelectAllDns: (recs: any[]) =>
+      setSelectedDnsIds((prev) =>
+        prev.size === recs.length ? new Set() : new Set(recs.map((r) => r.id))
+      ),
+    handleBulkDelete: async () => {
+      setLoadStates((s) => ({ ...s, bulk: true }));
+      for (const id of Array.from(selectedDnsIds)) {
+        try {
+          await fetchCF(`zones/${zoneId}/dns_records/${id}`, "DELETE");
+        } catch {}
+      }
+      const records = await fetchCF(`zones/${zoneId}/dns_records`);
+      setDnsRecords(records);
+      setSelectedDnsIds(new Set());
+      setShowBulkDeleteConfirm(false);
+      setLoadStates((s) => ({ ...s, bulk: false }));
+    },
+    handleBulkProxy: async (p: boolean) => {
+      setLoadStates((s) => ({ ...s, bulk: true }));
+      for (const id of Array.from(selectedDnsIds)) {
+        try {
+          await fetchCF(`zones/${zoneId}/dns_records/${id}`, "PATCH", {
+            proxied: p,
+          });
+        } catch {}
+      }
+      const records = await fetchCF(`zones/${zoneId}/dns_records`);
+      setDnsRecords(records);
+      setSelectedDnsIds(new Set());
+      setLoadStates((s) => ({ ...s, bulk: false }));
+    },
+    showBulkDeleteConfirm,
+    setShowBulkDeleteConfirm,
+    handleExportDns,
+    handleImportDns,
+    checkPropagation,
+    propResults,
   };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ShieldAlert, Terminal, X, GripHorizontal, Trash2 } from 'lucide-react';
+import { ShieldAlert, Terminal, X, Trash2, Loader2, AlertTriangle } from 'lucide-react';
 
 export const DeleteConfirmationModal = ({ state, record, onCancel, onConfirm }: any) => {
   const { t } = state;
@@ -22,12 +22,37 @@ export const DeleteConfirmationModal = ({ state, record, onCancel, onConfirm }: 
   );
 };
 
+export const BulkDeleteModal = ({ state, count, onCancel, onConfirm, loading }: any) => {
+  const { t } = state;
+  return (
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 m-4 border border-slate-200 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="size-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center shadow-inner"><AlertTriangle className="size-8" /></div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">{t.confirm_bulk_del}</h3>
+            <p className="text-sm text-slate-500 font-medium">
+              {t.bulk_del_desc.replace('{n}', count.toString())}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 w-full pt-4">
+            <button onClick={onCancel} disabled={loading} className="btn btn-ghost rounded-2xl font-black uppercase text-[11px] h-12 border border-slate-200 text-slate-600">{t.cancel}</button>
+            <button onClick={onConfirm} disabled={loading} className="btn bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black uppercase text-[11px] h-12 border-none shadow-lg shadow-rose-200 transition-all flex items-center gap-2">
+              {loading ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+              {loading ? t.processing : t.delete}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const ConsoleDrawer = ({ state, isOpen, onClose, logs, logEndRef }: any) => {
   const { t, consoleHeight, setConsoleHeight } = state;
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Implement resizing logic
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setIsResizing(true);
@@ -36,9 +61,7 @@ export const ConsoleDrawer = ({ state, isOpen, onClose, logs, logEndRef }: any) 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
-      // Calculate new height based on mouse position from bottom
       const newHeight = window.innerHeight - e.clientY;
-      // Clamp values between 150px and 80% of window
       if (newHeight >= 150 && newHeight <= window.innerHeight * 0.8) {
         setConsoleHeight(newHeight);
       }
@@ -72,7 +95,6 @@ export const ConsoleDrawer = ({ state, isOpen, onClose, logs, logEndRef }: any) 
       style={{ height: isOpen ? `${consoleHeight}px` : '0px' }}
       className={`absolute bottom-0 left-0 right-0 bg-[#0F172A] border-t border-slate-800 transition-[height] duration-300 ease-in-out z-50 overflow-hidden shadow-[0_-20px_50px_-12px_rgba(0,0,0,0.8)] ${isResizing ? 'transition-none' : ''}`}
     >
-      {/* Resizing Handle */}
       <div 
         onMouseDown={handleMouseDown}
         className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-orange-500/40 transition-colors z-60 flex items-center justify-center group"
