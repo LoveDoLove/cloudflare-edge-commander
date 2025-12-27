@@ -1,8 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-	output: "export",
-	/* config options here */
+  output: "export",
+  // Disable image optimization since there is no server-side Next.js process to resize them
+  images: {
+    unoptimized: true,
+  },
+  // Ensure trailing slashes are handled correctly for static routing
+  trailingSlash: true,
+  /* config options here */
 };
 
 export default nextConfig;
