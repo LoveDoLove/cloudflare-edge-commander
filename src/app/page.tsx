@@ -14,7 +14,7 @@ import { DnsDocsView } from '@/components/views/DnsDocsView';
 import { AboutView } from '@/components/views/AboutViews';
 import { PrivacyView } from '@/components/views/PrivacyViews';
 import { TermsView } from '@/components/views/TermsViews';
-import { DeleteConfirmationModal, ConsoleDrawer } from '@/components/Overlays';
+import { DeleteConfirmationModal, BulkDeleteModal, ConsoleDrawer } from '@/components/Overlays';
 
 const utils = {
   ipv6ToArpa: (ipv6: string) => {
@@ -69,7 +69,6 @@ export default function App() {
 
   return (
     <div className="flex h-screen font-sans overflow-hidden bg-slate-50 text-slate-900">
-      
       <aside className="w-60 bg-slate-900 flex flex-col shrink-0 relative z-20 shadow-2xl">
         <div className="p-6">
           <div className="flex items-center gap-3">
@@ -163,6 +162,7 @@ export default function App() {
         </div>
 
         {state.recordToDelete && <DeleteConfirmationModal state={state} record={state.recordToDelete} onCancel={() => state.setRecordToDelete(null)} onConfirm={state.handleDeleteDnsRecord} />}
+        {state.showBulkDeleteConfirm && <BulkDeleteModal state={state} count={state.selectedDnsIds.size} onCancel={() => state.setShowBulkDeleteConfirm(false)} onConfirm={state.handleBulkDelete} loading={state.loadStates.bulk} />}
         <ConsoleDrawer state={state} isOpen={state.isConsoleOpen} onClose={() => state.setIsConsoleOpen(false)} logs={state.logs} logEndRef={state.logEndRef} />
       </main>
 

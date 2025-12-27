@@ -8,8 +8,6 @@ export function useCloudflareManager() {
   const [lang, setLangState] = useState<Language>('en');
   const [activeTab, setActiveTab] = useState<'auth' | 'edge' | 'utils' | 'docs' | 'about' | 'privacy' | 'terms'>('auth');
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
-  
-  // New: State for drawer height to allow persistence
   const [consoleHeight, setConsoleHeight] = useState(280);
 
   const [authEmail, setAuthEmail] = useState('');
@@ -19,7 +17,7 @@ export function useCloudflareManager() {
   const [labResults, setLabResults] = useState<{ip: string, arpa: string}[]>([]);
   
   const [loadStates, setLoadStates] = useState({
-    inv: false, zone: false, cert: false, addDomain: false, dns: false, ca: false, ssl: false
+    inv: false, zone: false, cert: false, addDomain: false, dns: false, ca: false, ssl: false, bulk: false
   });
   
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
@@ -37,13 +35,15 @@ export function useCloudflareManager() {
   const [newDomainName, setNewDomainName] = useState('');
   const [newDns, setNewDns] = useState({ type: 'A', name: '', content: '', ttl: 1, proxied: false });
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDnsIds, setSelectedDnsIds] = useState<Set<string>>(new Set());
   const [recordToDelete, setRecordToDelete] = useState<any | null>(null);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<any | null>(null);
 
   const logEndRef = useRef<HTMLDivElement>(null);
 
-  // Persistence logic for Language
   useEffect(() => {
     const savedLang = localStorage.getItem('commander_pref_lang');
     if (savedLang === 'en' || savedLang === 'zh') {
@@ -67,7 +67,6 @@ export function useCloudflareManager() {
       nav_about: "About Us",
       nav_privacy: "Privacy Policy",
       nav_terms: "Terms of Service",
-      repo: "Repository",
       monitor_open: "Process Monitor",
       monitor_close: "Close Monitor",
       auth_title: "Connectivity & Access",
@@ -120,7 +119,16 @@ export function useCloudflareManager() {
       success_acc: "Sync Success: {n} accounts found.",
       found_zones: "Found {n} zones.",
       sync_done: "Sync complete.",
-      update_done: "Update successful."
+      update_done: "Update successful.",
+      bulk_actions: "Bulk Actions",
+      bulk_delete: "Bulk Delete",
+      bulk_proxy: "Bulk Proxy",
+      bulk_unproxy: "Bulk Unproxy",
+      search_placeholder: "Search records...",
+      selected_count: "{n} selected",
+      confirm_bulk_del: "Bulk Deletion",
+      bulk_del_desc: "Are you sure you want to delete {n} records? This cannot be undone.",
+      processing: "Processing...",
     },
     zh: {
       core_services: "核心服务",
@@ -132,7 +140,6 @@ export function useCloudflareManager() {
       nav_about: "关于我们",
       nav_privacy: "隐私政策",
       nav_terms: "服务条款",
-      repo: "源码仓库",
       monitor_open: "运行监控",
       monitor_close: "关闭监控",
       auth_title: "连接与访问控制",
@@ -185,7 +192,16 @@ export function useCloudflareManager() {
       success_acc: "同步成功：找到 {n} 个账号。",
       found_zones: "找到 {n} 个区域。",
       sync_done: "同步完成。",
-      update_done: "更新成功。"
+      update_done: "更新成功。",
+      bulk_actions: "批量操作",
+      bulk_delete: "批量删除",
+      bulk_proxy: "批量开启代理",
+      bulk_unproxy: "批量关闭代理",
+      search_placeholder: "搜索记录...",
+      selected_count: "已选择 {n} 项",
+      confirm_bulk_del: "确认批量删除",
+      bulk_del_desc: "确定要删除 {n} 条记录吗？此操作不可逆。",
+      processing: "处理中...",
     }
   };
 
@@ -236,6 +252,7 @@ export function useCloudflareManager() {
 
   const handleSelectZone = async (id: string, name: string) => {
     setZoneId(id); setSelectedZoneName(name); setDnsRecords([]); setEditingRecordId(null);
+    setSelectedDnsIds(new Set()); 
     setLoadStates(s => ({ ...s, cert: true, dns: true }));
     addLog(`Context: ${name}...`, 'info');
     try {
@@ -275,10 +292,60 @@ export function useCloudflareManager() {
     try {
       await fetchCF(`zones/${zoneId}/dns_records/${recordToDelete.id}`, 'DELETE');
       addLog(t.update_done, 'success');
-      const records = await fetchCF(`zones/${zoneId}/dns_records`) as any[];
-      setDnsRecords(records);
+      setDnsRecords(prev => prev.filter(r => r.id !== recordToDelete.id));
     } catch (err: any) { addLog(`Error: ${err.message}`, 'error'); } 
     finally { setLoadStates(s => ({ ...s, dns: false })); setRecordToDelete(null); }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!zoneId || selectedDnsIds.size === 0) return;
+    setLoadStates(s => ({ ...s, bulk: true, dns: true }));
+    addLog(`Initiating bulk delete for ${selectedDnsIds.size} records...`, 'info');
+    
+    const ids = Array.from(selectedDnsIds);
+    let successCount = 0;
+    
+    for (const id of ids) {
+      try {
+        await fetchCF(`zones/${zoneId}/dns_records/${id}`, 'DELETE');
+        successCount++;
+      } catch (e: any) {
+        addLog(`Failed to delete ID ${id}: ${e.message}`, 'error');
+      }
+    }
+    
+    addLog(`Bulk delete completed: ${successCount}/${ids.length} success.`, 'success');
+    const records = await fetchCF(`zones/${zoneId}/dns_records`) as any[];
+    setDnsRecords(records);
+    setSelectedDnsIds(new Set());
+    setShowBulkDeleteConfirm(false);
+    setLoadStates(s => ({ ...s, bulk: false, dns: false }));
+  };
+
+  const handleBulkProxy = async (enable: boolean) => {
+    if (!zoneId || selectedDnsIds.size === 0) return;
+    setLoadStates(s => ({ ...s, bulk: true, dns: true }));
+    addLog(`Bulk proxy ${enable ? 'enable' : 'disable'} for ${selectedDnsIds.size} records...`, 'info');
+    
+    const ids = Array.from(selectedDnsIds);
+    let successCount = 0;
+
+    for (const id of ids) {
+      const record = dnsRecords.find(r => r.id === id);
+      if (!record || !['A', 'AAAA', 'CNAME'].includes(record.type)) continue;
+      try {
+        await fetchCF(`zones/${zoneId}/dns_records/${id}`, 'PATCH', { proxied: enable });
+        successCount++;
+      } catch (e: any) {
+        addLog(`Proxy failed for ${record.name}: ${e.message}`, 'error');
+      }
+    }
+
+    addLog(`Bulk proxy update completed: ${successCount} updated.`, 'success');
+    const records = await fetchCF(`zones/${zoneId}/dns_records`) as any[];
+    setDnsRecords(records);
+    setSelectedDnsIds(new Set());
+    setLoadStates(s => ({ ...s, bulk: false, dns: false }));
   };
 
   const handleSaveEdit = async () => {
@@ -334,6 +401,23 @@ export function useCloudflareManager() {
     finally { setLoadStates(s => ({ ...s, addDomain: false })); }
   };
 
+  const toggleSelectDns = (id: string) => {
+    setSelectedDnsIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllDns = (currentRecords: any[]) => {
+    if (selectedDnsIds.size === currentRecords.length && currentRecords.length > 0) {
+      setSelectedDnsIds(new Set());
+    } else {
+      setSelectedDnsIds(new Set(currentRecords.map(r => r.id)));
+    }
+  };
+
   return {
     lang, setLang, t,
     activeTab, setActiveTab, isConsoleOpen, setIsConsoleOpen,
@@ -345,6 +429,8 @@ export function useCloudflareManager() {
     editingRecordId, setEditingRecordId, editFormData, setEditFormData, handleSaveEdit,
     caProvider, setCaProvider, handleApplyCA, sslMode, setSslMode, handleApplySSL,
     ipv6Input, setIpv6Input, labResults, setLabResults, loadStates, status, logs,
-    setNewDomainName, newDomainName, addLog, logEndRef, handleAddDomain
+    setNewDomainName, newDomainName, addLog, logEndRef, handleAddDomain,
+    searchTerm, setSearchTerm, selectedDnsIds, toggleSelectDns, toggleSelectAllDns, 
+    handleBulkDelete, handleBulkProxy, showBulkDeleteConfirm, setShowBulkDeleteConfirm
   };
 }
