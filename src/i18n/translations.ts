@@ -1,4 +1,4 @@
-export type Language = 'en' | 'zh';
+export type Language = "en" | "zh";
 
 export const translations = {
   en: {
@@ -71,8 +71,15 @@ export const translations = {
     search_placeholder: "Search records...",
     selected_count: "{n} selected",
     confirm_bulk_del: "Bulk Deletion",
-    bulk_del_desc: "Are you sure you want to delete {n} records? This cannot be undone.",
+    bulk_del_desc:
+      "Are you sure you want to delete {n} records? This cannot be undone.",
     processing: "Processing...",
+    // Task 1 specific
+    import_dns: "Import Records",
+    export_dns: "Export Records",
+    import_success: "Import completed: {s} success, {f} failed",
+    import_error: "Invalid file format or parsing error",
+    file_placeholder: "Upload CSV or JSON",
   },
   zh: {
     core_services: "核心服务",
@@ -146,5 +153,11 @@ export const translations = {
     confirm_bulk_del: "确认批量删除",
     bulk_del_desc: "确定要删除 {n} 条记录吗？此操作不可逆。",
     processing: "处理中...",
-  }
+    // Task 1 specific
+    import_dns: "导入记录",
+    export_dns: "导出记录",
+    import_success: "导入完成: {s} 成功, {f} 失败",
+    import_error: "文件格式错误或解析失败",
+    file_placeholder: "上传 CSV 或 JSON",
+  },
 };
