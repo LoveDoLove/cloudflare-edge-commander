@@ -116,14 +116,18 @@ export function useCloudflareManager() {
 
   const sanitizeContent = (content: string, type: string) => {
     if (!content) return "";
+    let clean = content;
     if (type === "TXT") {
-      let clean = content.replace(/\\"/g, '"');
-      if (clean.startsWith('"') && clean.endsWith('"')) {
+      clean = clean.replace(/\\"/g, '"');
+
+      while (
+        (clean.startsWith('"') && clean.endsWith('"')) ||
+        (clean.startsWith("'") && clean.endsWith("'"))
+      ) {
         clean = clean.substring(1, clean.length - 1);
       }
-      return clean;
     }
-    return content;
+    return clean;
   };
 
   const handleFetchAccounts = async () => {
@@ -290,6 +294,7 @@ export function useCloudflareManager() {
   const handleImportDns = async (file: File) => {
     if (!zoneId) return;
     setLoadStates((s) => ({ ...s, dns: true }));
+    addLog(`Starting import: ${file.name}`, "info");
     try {
       const text = await file.text();
       let imported: any[] = [];
@@ -326,9 +331,11 @@ export function useCloudflareManager() {
             ttl: r.ttl || 1,
           };
           if (r.priority !== undefined) payload.priority = r.priority;
+
           await fetchCF(`zones/${zoneId}/dns_records`, "POST", payload);
           s++;
         } catch (err: any) {
+          addLog(`Fail [${r.name}]: ${err.message}`, "error");
           f++;
         }
       }
@@ -359,11 +366,10 @@ export function useCloudflareManager() {
         url: `https://cloudflare-dns.com/dns-query?name=${record.name}&type=${record.type}`,
         headers: { Accept: "application/dns-json" },
       },
-      // FIXED: Quad9 standard port 443 instead of 5053
+      // Alibaba DNS: Fast global JSON resolver on standard 443 port
       {
-        name: "Quad9",
-        url: `https://dns.quad9.net/dns-query?name=${record.name}&type=${record.type}`,
-        headers: { Accept: "application/dns-json" },
+        name: "Alibaba",
+        url: `https://dns.alidns.com/resolve?name=${record.name}&type=${record.type}`,
       },
     ];
 
