@@ -10,8 +10,6 @@ export function useCloudflareManager() {
   >("auth");
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [consoleHeight, setConsoleHeight] = useState(280);
-
-  // Mobile Sidebar State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [authEmail, setAuthEmail] = useState("");
@@ -70,13 +68,14 @@ export function useCloudflareManager() {
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<any | null>(null);
 
+  const [propResults, setPropResults] = useState<Record<string, any>>({});
+
   const logEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const savedLang = localStorage.getItem("commander_pref_lang");
-    if (savedLang === "en" || savedLang === "zh") {
+    if (savedLang === "en" || savedLang === "zh")
       setLangState(savedLang as Language);
-    }
   }, []);
 
   const setLang = (newLang: Language) => {
@@ -87,9 +86,8 @@ export function useCloudflareManager() {
   const t = translations[lang];
 
   useEffect(() => {
-    if (isConsoleOpen) {
+    if (isConsoleOpen)
       logEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
   }, [logs, isConsoleOpen]);
 
   const addLog = (msg: string, type = "info") => {
@@ -121,15 +119,18 @@ export function useCloudflareManager() {
     return data.result;
   };
 
-  const handleFetchAccounts = async () => {
-    if (!authEmail || !globalKey) {
-      setStatus({ type: "error", message: "Credentials required." });
-      return;
+  const sanitizeContent = (content: string, type: string) => {
+    if (type === "TXT") {
+      return content.replace(/^"|"$/g, "").replace(/\\"/g, '"');
     }
+    return content;
+  };
+
+  const handleFetchAccounts = async () => {
+    if (!authEmail || !globalKey) return;
     setLoadStates((s) => ({ ...s, inv: true }));
-    addLog("Syncing accounts...", "info");
     try {
-      const data = (await fetchCF("accounts")) as any[];
+      const data = await fetchCF("accounts");
       setAccounts(data);
       addLog(t.success_acc.replace("{n}", data.length.toString()), "success");
     } catch (err: any) {
@@ -144,9 +145,8 @@ export function useCloudflareManager() {
     setSelectedAccountName(accName);
     setZones([]);
     setLoadStates((s) => ({ ...s, zone: true }));
-    addLog(`Loading zones for ${accName}...`, "info");
     try {
-      const data = (await fetchCF(`zones?account.id=${accId}`)) as any[];
+      const data = await fetchCF(`zones?account.id=${accId}`);
       setZones(data);
       addLog(t.found_zones.replace("{n}", data.length.toString()), "success");
     } catch (err: any) {
@@ -160,24 +160,17 @@ export function useCloudflareManager() {
     setZoneId(id);
     setSelectedZoneName(name);
     setDnsRecords([]);
-    setEditingRecordId(null);
-    setSelectedDnsIds(new Set());
     setLoadStates((s) => ({ ...s, cert: true, dns: true }));
-    addLog(`Context: ${name}...`, "info");
     try {
       try {
-        const universalSettings = await fetchCF(
-          `zones/${id}/ssl/universal/settings`
-        );
-        if (universalSettings?.certificate_authority)
-          setCaProvider(universalSettings.certificate_authority);
-        const sslSettings = await fetchCF(`zones/${id}/settings/ssl`);
-        if (sslSettings?.value) setSslMode(sslSettings.value);
-      } catch (e: any) {}
-      try {
-        const records = (await fetchCF(`zones/${id}/dns_records`)) as any[];
-        setDnsRecords(records || []);
-      } catch (e: any) {}
+        const universal = await fetchCF(`zones/${id}/ssl/universal/settings`);
+        if (universal?.certificate_authority)
+          setCaProvider(universal.certificate_authority);
+        const ssl = await fetchCF(`zones/${id}/settings/ssl`);
+        if (ssl?.value) setSslMode(ssl.value);
+      } catch (e) {}
+      const records = await fetchCF(`zones/${id}/dns_records`);
+      setDnsRecords(records || []);
       addLog(t.sync_done, "success");
     } catch (err: any) {
       addLog(`Error: ${err.message}`, "error");
@@ -189,119 +182,40 @@ export function useCloudflareManager() {
   const handleAddDnsRecord = async () => {
     if (!zoneId || !newDns.name || !newDns.content) return;
     setLoadStates((s) => ({ ...s, dns: true }));
-    addLog(`Creating ${newDns.type} record...`, "info");
     try {
-      await fetchCF(`zones/${zoneId}/dns_records`, "POST", newDns);
+      const sanitized = {
+        ...newDns,
+        content: sanitizeContent(newDns.content, newDns.type),
+      };
+      await fetchCF(`zones/${zoneId}/dns_records`, "POST", sanitized);
       addLog(`Created: ${newDns.name}`, "success");
       setNewDns({ type: "A", name: "", content: "", ttl: 1, proxied: false });
-      const records = (await fetchCF(`zones/${zoneId}/dns_records`)) as any[];
+      const records = await fetchCF(`zones/${zoneId}/dns_records`);
       setDnsRecords(records);
     } catch (err: any) {
       addLog(`Error: ${err.message}`, "error");
     } finally {
       setLoadStates((s) => ({ ...s, dns: false }));
     }
-  };
-
-  const handleDeleteDnsRecord = async () => {
-    if (!zoneId || !recordToDelete) return;
-    setLoadStates((s) => ({ ...s, dns: true }));
-    addLog(`Deleting ${recordToDelete.name}...`, "info");
-    try {
-      await fetchCF(
-        `zones/${zoneId}/dns_records/${recordToDelete.id}`,
-        "DELETE"
-      );
-      addLog(t.update_done, "success");
-      setDnsRecords((prev) => prev.filter((r) => r.id !== recordToDelete.id));
-    } catch (err: any) {
-      addLog(`Error: ${err.message}`, "error");
-    } finally {
-      setLoadStates((s) => ({ ...s, dns: false }));
-      setRecordToDelete(null);
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (!zoneId || selectedDnsIds.size === 0) return;
-    setLoadStates((s) => ({ ...s, bulk: true, dns: true }));
-    addLog(
-      `Initiating bulk delete for ${selectedDnsIds.size} records...`,
-      "info"
-    );
-
-    const ids = Array.from(selectedDnsIds);
-    let successCount = 0;
-
-    for (const id of ids) {
-      try {
-        await fetchCF(`zones/${zoneId}/dns_records/${id}`, "DELETE");
-        successCount++;
-      } catch (e: any) {
-        addLog(`Failed to delete ID ${id}: ${e.message}`, "error");
-      }
-    }
-
-    addLog(
-      `Bulk delete completed: ${successCount}/${ids.length} success.`,
-      "success"
-    );
-    const records = (await fetchCF(`zones/${zoneId}/dns_records`)) as any[];
-    setDnsRecords(records);
-    setSelectedDnsIds(new Set());
-    setShowBulkDeleteConfirm(false);
-    setLoadStates((s) => ({ ...s, bulk: false, dns: false }));
-  };
-
-  const handleBulkProxy = async (enable: boolean) => {
-    if (!zoneId || selectedDnsIds.size === 0) return;
-    setLoadStates((s) => ({ ...s, bulk: true, dns: true }));
-    addLog(
-      `Bulk proxy ${enable ? "enable" : "disable"} for ${
-        selectedDnsIds.size
-      } records...`,
-      "info"
-    );
-
-    const ids = Array.from(selectedDnsIds);
-    let successCount = 0;
-
-    for (const id of ids) {
-      const record = dnsRecords.find((r) => r.id === id);
-      if (!record || !["A", "AAAA", "CNAME"].includes(record.type)) continue;
-      try {
-        await fetchCF(`zones/${zoneId}/dns_records/${id}`, "PATCH", {
-          proxied: enable,
-        });
-        successCount++;
-      } catch (e: any) {
-        addLog(`Proxy failed for ${record.name}: ${e.message}`, "error");
-      }
-    }
-
-    addLog(`Bulk proxy update completed: ${successCount} updated.`, "success");
-    const records = (await fetchCF(`zones/${zoneId}/dns_records`)) as any[];
-    setDnsRecords(records);
-    setSelectedDnsIds(new Set());
-    setLoadStates((s) => ({ ...s, bulk: false, dns: false }));
   };
 
   const handleSaveEdit = async () => {
     if (!zoneId || !editingRecordId || !editFormData) return;
     setLoadStates((s) => ({ ...s, dns: true }));
-    addLog(`Updating record: ${editFormData.name}...`, "info");
     try {
-      await fetchCF(`zones/${zoneId}/dns_records/${editingRecordId}`, "PATCH", {
-        type: editFormData.type,
-        name: editFormData.name,
-        content: editFormData.content,
-        proxied: editFormData.proxied,
-      });
-      addLog(t.update_done, "success");
-      const records = (await fetchCF(`zones/${zoneId}/dns_records`)) as any[];
+      const sanitized = {
+        ...editFormData,
+        content: sanitizeContent(editFormData.content, editFormData.type),
+      };
+      await fetchCF(
+        `zones/${zoneId}/dns_records/${editingRecordId}`,
+        "PATCH",
+        sanitized
+      );
+      const records = await fetchCF(`zones/${zoneId}/dns_records`);
       setDnsRecords(records);
       setEditingRecordId(null);
-      setEditFormData(null);
+      addLog(t.update_done, "success");
     } catch (err: any) {
       addLog(`Update Error: ${err.message}`, "error");
     } finally {
@@ -312,13 +226,11 @@ export function useCloudflareManager() {
   const handleApplyCA = async () => {
     if (!zoneId) return;
     setLoadStates((s) => ({ ...s, ca: true }));
-    addLog(`Updating CA...`, "info");
     try {
       await fetchCF(`zones/${zoneId}/ssl/universal/settings`, "PATCH", {
         certificate_authority: caProvider,
       });
       addLog(t.update_done, "success");
-      setStatus({ type: "success", message: `CA updated.` });
     } catch (err: any) {
       addLog(`Error: ${err.message}`, "error");
     } finally {
@@ -329,13 +241,11 @@ export function useCloudflareManager() {
   const handleApplySSL = async () => {
     if (!zoneId) return;
     setLoadStates((s) => ({ ...s, ssl: true }));
-    addLog(`Updating Encryption...`, "info");
     try {
       await fetchCF(`zones/${zoneId}/settings/ssl`, "PATCH", {
         value: sslMode,
       });
       addLog(t.update_done, "success");
-      setStatus({ type: "success", message: `SSL level updated.` });
     } catch (err: any) {
       addLog(`Error: ${err.message}`, "error");
     } finally {
@@ -346,7 +256,6 @@ export function useCloudflareManager() {
   const handleAddDomain = async () => {
     if (!selectedAccountId || !newDomainName) return;
     setLoadStates((s) => ({ ...s, addDomain: true }));
-    addLog(`Adding ${newDomainName}...`, "info");
     try {
       await fetchCF("zones", "POST", {
         name: newDomainName,
@@ -362,76 +271,64 @@ export function useCloudflareManager() {
     }
   };
 
-  // Task 1 Logic: Export
   const handleExportDns = () => {
-    if (dnsRecords.length === 0) return;
-    const data = JSON.stringify(dnsRecords, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(dnsRecords, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `dns-export-${selectedZoneName}-${
-      new Date().toISOString().split("T")[0]
-    }.json`;
-    link.click();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dns-${selectedZoneName}.json`;
+    a.click();
     addLog(`Exported ${dnsRecords.length} records.`, "success");
   };
 
-  // Task 1 Logic: Import
   const handleImportDns = async (file: File) => {
     if (!zoneId) return;
     setLoadStates((s) => ({ ...s, dns: true }));
-    addLog(`Parsing import file: ${file.name}...`, "info");
-
     try {
       const text = await file.text();
-      let recordsToImport: any[] = [];
-
+      let imported = [];
       if (file.name.endsWith(".json")) {
-        recordsToImport = JSON.parse(text);
-      } else if (file.name.endsWith(".csv")) {
-        const lines = text.split("\n");
-        recordsToImport = lines
-          .slice(1)
-          .filter((line) => line.trim())
-          .map((line) => {
-            const values = line.split(",");
+        imported = JSON.parse(text);
+      } else {
+        const rows = text.split("\n").slice(1);
+        imported = rows
+          .filter((r) => r.trim())
+          .map((row) => {
+            const cols =
+              row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || row.split(",");
             return {
-              type: values[0]?.trim(),
-              name: values[1]?.trim(),
-              content: values[2]?.trim(),
-              proxied: values[3]?.trim().toLowerCase() === "true",
-              ttl: parseInt(values[4]) || 1,
+              type: cols[0]?.replace(/"/g, "").trim(),
+              name: cols[1]?.replace(/"/g, "").trim(),
+              content: cols[2]?.replace(/"/g, "").trim(),
+              proxied: cols[3]?.toLowerCase().includes("true"),
+              ttl: parseInt(cols[4]) || 1,
             };
           });
       }
-
-      let successCount = 0;
-      let failCount = 0;
-
-      for (const record of recordsToImport) {
+      let s = 0,
+        f = 0;
+      for (const r of imported) {
         try {
-          await fetchCF(`zones/${zoneId}/dns_records`, "POST", {
-            type: record.type,
-            name: record.name,
-            content: record.content,
-            proxied: !!record.proxied,
-            ttl: record.ttl || 1,
-          });
-          successCount++;
-        } catch (e) {
-          failCount++;
+          const sanitized = {
+            ...r,
+            content: sanitizeContent(r.content, r.type),
+          };
+          await fetchCF(`zones/${zoneId}/dns_records`, "POST", sanitized);
+          s++;
+        } catch {
+          f++;
         }
       }
-
       addLog(
         t.import_success
-          .replace("{s}", successCount.toString())
-          .replace("{f}", failCount.toString()),
+          .replace("{s}", s.toString())
+          .replace("{f}", f.toString()),
         "success"
       );
-      const updated = await fetchCF(`zones/${zoneId}/dns_records`);
-      setDnsRecords(updated);
+      const records = await fetchCF(`zones/${zoneId}/dns_records`);
+      setDnsRecords(records);
     } catch (err) {
       addLog(t.import_error, "error");
     } finally {
@@ -439,23 +336,55 @@ export function useCloudflareManager() {
     }
   };
 
-  const toggleSelectDns = (id: string) => {
-    setSelectedDnsIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const toggleSelectAllDns = (currentRecords: any[]) => {
-    if (
-      selectedDnsIds.size === currentRecords.length &&
-      currentRecords.length > 0
-    ) {
-      setSelectedDnsIds(new Set());
-    } else {
-      setSelectedDnsIds(new Set(currentRecords.map((r) => r.id)));
+  const checkPropagation = async (record: any) => {
+    setPropResults((prev) => ({ ...prev, [record.id]: { loading: true } }));
+    const resolvers = [
+      {
+        name: "Google",
+        url: `https://dns.google/resolve?name=${record.name}&type=${record.type}`,
+      },
+      {
+        name: "Cloudflare",
+        url: `https://cloudflare-dns.com/dns-query?name=${record.name}&type=${record.type}`,
+        headers: { Accept: "application/dns-json" },
+      },
+      {
+        name: "Quad9",
+        url: `https://dns.quad9.net:5053/dns-query?name=${record.name}&type=${record.type}`,
+        headers: { Accept: "application/dns-json" },
+      },
+    ];
+    try {
+      const checks = await Promise.all(
+        resolvers.map(async (res) => {
+          try {
+            const r = await fetch(res.url, { headers: res.headers });
+            const json: any = await r.json();
+            const answer = json.Answer?.[0]?.data || "NXDOMAIN";
+            const match =
+              answer.toLowerCase().includes(record.content.toLowerCase()) ||
+              record.content
+                .toLowerCase()
+                .includes(answer.toLowerCase().replace(/\.$/, ""));
+            return {
+              name: res.name,
+              status: match ? "success" : "pending",
+              value: answer,
+            };
+          } catch {
+            return { name: res.name, status: "error", value: "Timeout" };
+          }
+        })
+      );
+      setPropResults((prev) => ({
+        ...prev,
+        [record.id]: { loading: false, checks },
+      }));
+    } catch {
+      setPropResults((prev) => ({
+        ...prev,
+        [record.id]: { loading: false, error: true },
+      }));
     }
   };
 
@@ -489,7 +418,23 @@ export function useCloudflareManager() {
     handleAddDnsRecord,
     recordToDelete,
     setRecordToDelete,
-    handleDeleteDnsRecord,
+    handleDeleteDnsRecord: async () => {
+      if (!zoneId || !recordToDelete) return;
+      setLoadStates((s) => ({ ...s, dns: true }));
+      try {
+        await fetchCF(
+          `zones/${zoneId}/dns_records/${recordToDelete.id}`,
+          "DELETE"
+        );
+        setDnsRecords((prev) => prev.filter((r) => r.id !== recordToDelete.id));
+        addLog(t.update_done, "success");
+      } catch (e: any) {
+        addLog(e.message, "error");
+      } finally {
+        setLoadStates((s) => ({ ...s, dns: false }));
+        setRecordToDelete(null);
+      }
+    },
     editingRecordId,
     setEditingRecordId,
     editFormData,
@@ -516,13 +461,48 @@ export function useCloudflareManager() {
     searchTerm,
     setSearchTerm,
     selectedDnsIds,
-    toggleSelectDns,
-    toggleSelectAllDns,
-    handleBulkDelete,
-    handleBulkProxy,
+    toggleSelectDns: (id: string) =>
+      setSelectedDnsIds((prev) => {
+        const n = new Set(prev);
+        n.has(id) ? n.delete(id) : n.add(id);
+        return n;
+      }),
+    toggleSelectAllDns: (recs: any[]) =>
+      setSelectedDnsIds((prev) =>
+        prev.size === recs.length ? new Set() : new Set(recs.map((r) => r.id))
+      ),
+    handleBulkDelete: async () => {
+      setLoadStates((s) => ({ ...s, bulk: true }));
+      for (const id of Array.from(selectedDnsIds)) {
+        try {
+          await fetchCF(`zones/${zoneId}/dns_records/${id}`, "DELETE");
+        } catch {}
+      }
+      const records = await fetchCF(`zones/${zoneId}/dns_records`);
+      setDnsRecords(records);
+      setSelectedDnsIds(new Set());
+      setShowBulkDeleteConfirm(false);
+      setLoadStates((s) => ({ ...s, bulk: false }));
+    },
+    handleBulkProxy: async (p: boolean) => {
+      setLoadStates((s) => ({ ...s, bulk: true }));
+      for (const id of Array.from(selectedDnsIds)) {
+        try {
+          await fetchCF(`zones/${zoneId}/dns_records/${id}`, "PATCH", {
+            proxied: p,
+          });
+        } catch {}
+      }
+      const records = await fetchCF(`zones/${zoneId}/dns_records`);
+      setDnsRecords(records);
+      setSelectedDnsIds(new Set());
+      setLoadStates((s) => ({ ...s, bulk: false }));
+    },
     showBulkDeleteConfirm,
     setShowBulkDeleteConfirm,
     handleExportDns,
     handleImportDns,
+    checkPropagation,
+    propResults,
   };
 }

@@ -19,6 +19,7 @@ import {
   ZapOff,
   Download,
   Upload,
+  Activity,
 } from "lucide-react";
 
 const DNS_TYPES = [
@@ -151,52 +152,41 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                       className="input input-sm bg-slate-50 border-slate-200 w-full pl-9 rounded-xl text-[10px] font-bold h-10 focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all"
                     />
                   </div>
-
-                  {/* Task 1: Import/Export Buttons */}
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  {/* Task 1 Buttons */}
+                  <div className="flex gap-1.5 shrink-0">
                     <button
                       onClick={state.handleExportDns}
-                      className="btn btn-sm btn-ghost text-slate-500 hover:text-indigo-600 rounded-xl"
+                      className="btn btn-sm btn-ghost text-slate-400 hover:text-indigo-600 p-2"
                       title={t.export_dns}
                     >
                       <Download className="size-4" />
                     </button>
-
-                    <label className="btn btn-sm btn-ghost text-slate-500 hover:text-emerald-600 rounded-xl cursor-pointer">
+                    <label
+                      className="btn btn-sm btn-ghost text-slate-400 hover:text-emerald-600 p-2 cursor-pointer"
+                      title={t.import_dns}
+                    >
                       <Upload className="size-4" />
                       <input
                         type="file"
-                        accept=".csv,.json"
                         className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) state.handleImportDns(file);
-                          // Clear input so same file can be uploaded again
-                          e.target.value = "";
-                        }}
+                        accept=".csv,.json"
+                        onChange={(e) =>
+                          e.target.files?.[0] &&
+                          state.handleImportDns(e.target.files[0])
+                        }
                       />
                     </label>
                   </div>
                 </div>
-                {state.loadStates.dns && (
-                  <Loader2 className="size-5 animate-spin text-indigo-600 shrink-0 hidden sm:block" />
-                )}
               </div>
 
-              {/* Form Grid */}
+              {/* Add Record Form */}
               <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-inner">
                 <select
                   value={state.newDns.type}
-                  onChange={(e) => {
-                    const type = e.target.value;
-                    state.setNewDns({
-                      ...state.newDns,
-                      type,
-                      proxied: canBeProxied(type)
-                        ? state.newDns.proxied
-                        : false,
-                    });
-                  }}
+                  onChange={(e) =>
+                    state.setNewDns({ ...state.newDns, type: e.target.value })
+                  }
                   className="select select-sm select-bordered bg-white font-black h-11 text-[11px] sm:col-span-1 rounded-xl focus:outline-none shadow-sm"
                 >
                   {DNS_TYPES.map((t) => (
@@ -238,7 +228,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                             proxied: e.target.checked,
                           })
                         }
-                        className="checkbox checkbox-sm checkbox-primary rounded-lg border-2 transition-all shadow-sm"
+                        className="checkbox checkbox-sm checkbox-primary rounded-lg border-2"
                       />
                       <span className="text-[10px] font-black text-slate-600 uppercase group-hover:text-indigo-600">
                         {t.proxy}
@@ -249,13 +239,13 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                 <button
                   onClick={state.handleAddDnsRecord}
                   disabled={state.loadStates.dns}
-                  className="btn btn-md btn-primary h-11 font-black uppercase rounded-xl border-none shadow-lg shadow-indigo-100 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50"
+                  className="btn btn-md btn-primary h-11 font-black uppercase rounded-xl border-none shadow-lg text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50"
                 >
                   {t.create}
                 </button>
               </div>
 
-              {/* Bulk Action Toolbar */}
+              {/* Bulk Toolbar */}
               {state.selectedDnsIds.size > 0 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between bg-indigo-600 p-3 gap-3 rounded-2xl shadow-lg animate-in slide-in-from-top-2 duration-300">
                   <div className="flex items-center gap-3 sm:ml-2">
@@ -270,19 +260,19 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                   <div className="flex flex-wrap items-center justify-center gap-2">
                     <button
                       onClick={() => state.handleBulkProxy(true)}
-                      className="btn btn-xs bg-white/20 hover:bg-white/30 text-white border-none rounded-lg font-black uppercase text-[8px] sm:text-[9px] h-8 px-2 sm:px-3"
+                      className="btn btn-xs bg-white/20 hover:bg-white/30 text-white border-none rounded-lg font-black uppercase h-8 px-3"
                     >
                       <Zap className="size-3 mr-1" /> {t.bulk_proxy}
                     </button>
                     <button
                       onClick={() => state.handleBulkProxy(false)}
-                      className="btn btn-xs bg-white/20 hover:bg-white/30 text-white border-none rounded-lg font-black uppercase text-[8px] sm:text-[9px] h-8 px-2 sm:px-3"
+                      className="btn btn-xs bg-white/20 hover:bg-white/30 text-white border-none rounded-lg font-black uppercase h-8 px-3"
                     >
                       <ZapOff className="size-3 mr-1" /> {t.bulk_unproxy}
                     </button>
                     <button
                       onClick={() => state.setShowBulkDeleteConfirm(true)}
-                      className="btn btn-xs bg-rose-500 hover:bg-rose-600 text-white border-none rounded-lg font-black uppercase text-[8px] sm:text-[9px] h-8 px-2 sm:px-3 shadow-md shadow-rose-900/20"
+                      className="btn btn-xs bg-rose-500 hover:bg-rose-600 text-white border-none rounded-lg font-black uppercase h-8 px-3 shadow-md shadow-rose-900/20"
                     >
                       <Trash2 className="size-3 mr-1" /> {t.bulk_delete}
                     </button>
@@ -290,7 +280,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                 </div>
               )}
 
-              {/* Table Container */}
+              {/* Record Table */}
               <div className="max-h-120 overflow-x-auto border border-slate-200 rounded-2xl relative min-h-60 shadow-inner bg-white custom-scrollbar-light">
                 {state.loadStates.dns && !state.loadStates.bulk ? (
                   <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 gap-3">
@@ -324,7 +314,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                         <th className="px-5 py-4 text-center w-20">
                           {t.proxy}
                         </th>
-                        <th className="px-5 py-4 text-right w-32">Action</th>
+                        <th className="px-5 py-4 text-right w-44">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -364,12 +354,9 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                                     state.setEditFormData({
                                       ...state.editFormData,
                                       type: e.target.value,
-                                      proxied: canBeProxied(e.target.value)
-                                        ? state.editFormData.proxied
-                                        : false,
                                     })
                                   }
-                                  className="select select-xs select-bordered w-full bg-white text-slate-900 font-bold h-9 text-[10px] rounded-lg shadow-sm focus:outline-none"
+                                  className="select select-xs select-bordered w-full bg-white font-bold h-9 text-[10px] rounded-lg focus:outline-none"
                                 >
                                   {DNS_TYPES.map((t) => (
                                     <option key={t} value={t}>
@@ -388,7 +375,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                                       name: e.target.value,
                                     })
                                   }
-                                  className="input input-xs input-bordered w-full bg-white text-slate-900 font-bold h-9 text-[10px] rounded-lg shadow-sm"
+                                  className="input input-xs input-bordered w-full bg-white font-bold h-9 text-[10px] rounded-lg"
                                 />
                               </td>
                               <td className="px-2 py-2">
@@ -401,7 +388,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                                       content: e.target.value,
                                     })
                                   }
-                                  className="input input-xs input-bordered w-full bg-white text-slate-900 font-bold h-9 text-[10px] rounded-lg shadow-sm"
+                                  className="input input-xs input-bordered w-full bg-white font-bold h-9 text-[10px] rounded-lg"
                                 />
                               </td>
                               <td className="px-2 py-2 text-center">
@@ -413,7 +400,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                                         proxied: !state.editFormData.proxied,
                                       })
                                     }
-                                    className={`size-6 mx-auto rounded-full border-2 border-white shadow-sm transition-all flex items-center justify-center ${
+                                    className={`size-6 mx-auto rounded-full border-2 border-white shadow-sm flex items-center justify-center ${
                                       state.editFormData.proxied
                                         ? "bg-orange-400"
                                         : "bg-slate-200"
@@ -437,7 +424,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                                 <div className="flex items-center justify-end gap-1.5 pt-1">
                                   <button
                                     onClick={state.handleSaveEdit}
-                                    className="btn btn-xs bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm text-white px-2 border-none"
+                                    className="btn btn-xs bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white px-2 border-none"
                                   >
                                     <Check className="size-3.5" />
                                   </button>
@@ -445,7 +432,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                                     onClick={() =>
                                       state.setEditingRecordId(null)
                                     }
-                                    className="btn btn-xs btn-ghost bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 px-2"
+                                    className="btn btn-xs btn-ghost bg-slate-100 rounded-lg text-slate-600 px-2"
                                   >
                                     <X className="size-3.5" />
                                   </button>
@@ -471,23 +458,60 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                                 )}
                               </td>
                               <td className="px-5 py-4 text-right">
-                                <div className="flex items-center justify-end gap-2">
+                                <div className="flex items-center justify-end gap-1">
+                                  {/* Task 2 Button */}
+                                  <button
+                                    onClick={() => state.checkPropagation(r)}
+                                    className={`btn btn-ghost btn-xs rounded-xl transition-all ${
+                                      state.propResults[r.id]?.loading
+                                        ? "text-indigo-600"
+                                        : "text-slate-300 hover:text-indigo-600"
+                                    }`}
+                                    title={t.prop_check}
+                                  >
+                                    {state.propResults[r.id]?.loading ? (
+                                      <Loader2 className="size-4 animate-spin" />
+                                    ) : (
+                                      <Activity className="size-4" />
+                                    )}
+                                  </button>
                                   <button
                                     onClick={() => {
                                       state.setEditingRecordId(r.id);
                                       state.setEditFormData({ ...r });
                                     }}
-                                    className="btn btn-ghost btn-xs text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                                    className="btn btn-ghost btn-xs text-slate-300 hover:text-amber-600 hover:bg-amber-50 rounded-xl"
                                   >
                                     <Edit3 className="size-4" />
                                   </button>
                                   <button
                                     onClick={() => state.setRecordToDelete(r)}
-                                    className="btn btn-ghost btn-xs text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                    className="btn btn-ghost btn-xs text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl"
                                   >
                                     <Trash2 className="size-4" />
                                   </button>
                                 </div>
+                                {/* Task 2 indicators */}
+                                {state.propResults[r.id] &&
+                                  !state.propResults[r.id].loading && (
+                                    <div className="flex gap-1 justify-end mt-1 mr-2">
+                                      {state.propResults[r.id].checks?.map(
+                                        (c: any, i: number) => (
+                                          <div
+                                            key={i}
+                                            title={`${c.name}: ${c.value}`}
+                                            className={`size-1.5 rounded-full ${
+                                              c.status === "success"
+                                                ? "bg-emerald-500 shadow-[0_0_5px_#10b981]"
+                                                : c.status === "pending"
+                                                ? "bg-amber-500"
+                                                : "bg-slate-300"
+                                            }`}
+                                          />
+                                        )
+                                      )}
+                                    </div>
+                                  )}
                               </td>
                             </>
                           )}
@@ -509,7 +533,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
               </div>
             </div>
 
-            {/* SSL & CA Section */}
+            {/* SSL/CA Management */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pb-8">
               <div className="bg-slate-900 rounded-2xl p-6 sm:p-7 shadow-2xl shadow-slate-900/40 space-y-6 flex flex-col min-h-55 relative overflow-hidden text-white">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/5 blur-3xl rounded-full" />
