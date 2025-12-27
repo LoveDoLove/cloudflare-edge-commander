@@ -43,7 +43,7 @@ Cloudflare Edge Commander is a small admin dashboard built with Next.js and Open
 - Run simple network lab utilities (IPv6 <-> arpa conversion, random IPv6 generation)
 - Stream live client-side logs to a console drawer
 
-The app runs server-side API proxying on Cloudflare (see `src/app/api/cloudflare/route.ts`) so credentials are not directly published to third-party APIs from the browser.
+The app runs server-side API proxying using a Cloudflare Pages Function at `functions/api/cloudflare.ts` (deployed via OpenNext/Wrangler). This keeps user credentials out of client-side requests.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -123,8 +123,10 @@ Other available commands (see `package.json`):
 
 ### How API integration works
 
-- The UI accepts Cloudflare credentials (Account email + Global API Key) and sends them to the server-side proxy at `POST /api/cloudflare` (see `src/app/api/cloudflare/route.ts`).
-- The proxy then forwards requests to the Cloudflare REST API and returns responses to the client. For production, prefer Cloudflare API Tokens with minimal scopes.
+- The UI accepts Cloudflare credentials (Account email + Global API Key) and sends them to the server-side proxy at `POST /api/cloudflare`. On Cloudflare this route is implemented by the Pages Function at `functions/api/cloudflare.ts`.
+- The proxy forwards requests to the Cloudflare REST API and returns responses to the client. For production, prefer Cloudflare API Tokens with minimal scopes and server-side secrets.
+
+**Security & Privacy:** This project does not persist Cloudflare API keys or account emails in any long-term storage; credentials are used only for the active session and proxied requests. You are responsible for actions performed with your credentials—prefer tokens with least privilege and use Wrangler secrets or environment variables for production.
 
 > Security tip: use environment variables / Wrangler secrets for production credentials and avoid embedding keys in client-side source.
 
@@ -137,7 +139,7 @@ Other available commands (see `package.json`):
 Key files & folders:
 
 - `src/app/` — Next.js app router pages and layout
-- `src/app/api/cloudflare/route.ts` — server-side Cloudflare proxy endpoint
+- `functions/api/cloudflare.ts` — Cloudflare Pages Function proxy endpoint (handles `POST /api/cloudflare`)
 - `src/hooks/useCloudflareManager.ts` — primary application state and Cloudflare actions
 - `src/components/` — UI components and overlays
 - `wrangler.jsonc` — Cloudflare worker configuration
