@@ -31,9 +31,14 @@ export function useCloudflareManager() {
     bulk: false,
   });
 
+  const [status, setStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const [logs, setLogs] = useState<
     { msg: string; type: string; time: string }[]
   >([]);
+
   const [accounts, setAccounts] = useState<any[]>([]);
   const [zones, setZones] = useState<any[]>([]);
   const [dnsRecords, setDnsRecords] = useState<any[]>([]);
@@ -119,7 +124,6 @@ export function useCloudflareManager() {
     let clean = content;
     if (type === "TXT") {
       clean = clean.replace(/\\"/g, '"');
-
       while (
         (clean.startsWith('"') && clean.endsWith('"')) ||
         (clean.startsWith("'") && clean.endsWith("'"))
@@ -294,7 +298,7 @@ export function useCloudflareManager() {
   const handleImportDns = async (file: File) => {
     if (!zoneId) return;
     setLoadStates((s) => ({ ...s, dns: true }));
-    addLog(`Starting import: ${file.name}`, "info");
+    addLog(`Importing ${file.name}...`, "info");
     try {
       const text = await file.text();
       let imported: any[] = [];
@@ -331,11 +335,9 @@ export function useCloudflareManager() {
             ttl: r.ttl || 1,
           };
           if (r.priority !== undefined) payload.priority = r.priority;
-
           await fetchCF(`zones/${zoneId}/dns_records`, "POST", payload);
           s++;
-        } catch (err: any) {
-          addLog(`Fail [${r.name}]: ${err.message}`, "error");
+        } catch {
           f++;
         }
       }
@@ -366,7 +368,6 @@ export function useCloudflareManager() {
         url: `https://cloudflare-dns.com/dns-query?name=${record.name}&type=${record.type}`,
         headers: { Accept: "application/dns-json" },
       },
-      // Alibaba DNS: Fast global JSON resolver on standard 443 port
       {
         name: "Alibaba",
         url: `https://dns.alidns.com/resolve?name=${record.name}&type=${record.type}`,
@@ -407,6 +408,24 @@ export function useCloudflareManager() {
     }
   };
 
+  const handleDeleteDnsRecord = async () => {
+    if (!zoneId || !recordToDelete) return;
+    setLoadStates((s) => ({ ...s, dns: true }));
+    try {
+      await fetchCF(
+        `zones/${zoneId}/dns_records/${recordToDelete.id}`,
+        "DELETE"
+      );
+      setDnsRecords((prev) => prev.filter((r) => r.id !== recordToDelete.id));
+      addLog(t.update_done, "success");
+    } catch (e: any) {
+      addLog(e.message, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, dns: false }));
+      setRecordToDelete(null);
+    }
+  };
+
   return {
     lang,
     setLang,
@@ -437,23 +456,7 @@ export function useCloudflareManager() {
     handleAddDnsRecord,
     recordToDelete,
     setRecordToDelete,
-    handleDeleteDnsRecord: async () => {
-      if (!zoneId || !recordToDelete) return;
-      setLoadStates((s) => ({ ...s, dns: true }));
-      try {
-        await fetchCF(
-          `zones/${zoneId}/dns_records/${recordToDelete.id}`,
-          "DELETE"
-        );
-        setDnsRecords((prev) => prev.filter((r) => r.id !== recordToDelete.id));
-        addLog(t.update_done, "success");
-      } catch (e: any) {
-        addLog(e.message, "error");
-      } finally {
-        setLoadStates((s) => ({ ...s, dns: false }));
-        setRecordToDelete(null);
-      }
-    },
+    handleDeleteDnsRecord,
     editingRecordId,
     setEditingRecordId,
     editFormData,
@@ -470,6 +473,7 @@ export function useCloudflareManager() {
     labResults,
     setLabResults,
     loadStates,
+    status,
     logs,
     setNewDomainName,
     newDomainName,
