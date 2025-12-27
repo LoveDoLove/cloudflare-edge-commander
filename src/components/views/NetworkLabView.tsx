@@ -59,7 +59,7 @@ export const NetworkLabView = ({ state, utils }: { state: any, utils: any }) => 
               </div>
           </div>
           <div className="lg:col-span-7 space-y-6">
-              <div className="bg-white border border-slate-200 rounded-4xl shadow-xl shadow-slate-200/40 overflow-hidden min-h-[250px] sm:min-h-75 flex flex-col">
+              <div className="bg-white border border-slate-200 rounded-4xl shadow-xl shadow-slate-200/40 overflow-hidden min-h-62.5 sm:min-h-75 flex flex-col">
                   <div className="px-6 sm:px-8 py-5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Binary className="size-4 text-slate-400" />
@@ -67,7 +67,7 @@ export const NetworkLabView = ({ state, utils }: { state: any, utils: any }) => 
                     </div>
                     <span className="text-[9px] font-black bg-slate-200 text-slate-600 px-2 py-0.5 rounded uppercase">{state.labResults.length} {isFinite(state.labResults.length) ? 'RES' : ''}</span>
                   </div>
-                  <div className="flex-1 p-4 sm:p-6 custom-scrollbar-light overflow-y-auto max-h-[400px] sm:max-h-125">
+                  <div className="flex-1 p-4 sm:p-6 custom-scrollbar-light overflow-y-auto max-h-100 sm:max-h-125">
                       {state.labResults.length > 0 ? (
                         <div className="space-y-4">
                           {state.labResults.map((res: any, idx: number) => (

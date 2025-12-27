@@ -129,7 +129,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                  {state.loadStates.dns && !state.loadStates.bulk ? (
                    <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 gap-3"><span className="loading loading-spinner loading-lg text-indigo-600"></span><p className="text-[10px] font-black uppercase text-indigo-900 tracking-[0.2em] animate-pulse">{t.syncing_dns}</p></div>
                  ) : (
-                   <table className="table table-xs w-full min-w-[700px] border-collapse text-left">
+                   <table className="table table-xs w-full min-w-175 border-collapse text-left">
                       <thead className="bg-slate-100 text-slate-900 sticky top-0 z-10 shadow-sm"><tr className="font-black text-[10px] uppercase tracking-widest border-b border-slate-200">
                         <th className="px-5 py-4 w-12 text-center">
                           <button onClick={() => state.toggleSelectAllDns(filteredDns)} className="flex items-center justify-center hover:text-indigo-600 transition-colors mx-auto">
@@ -191,7 +191,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
             </div>
           </>
         ) : (
-          <div className="h-full min-h-[400px] bg-white border border-slate-200 border-dashed rounded-3xl flex flex-col items-center justify-center p-8 sm:p-16 text-center opacity-50 shadow-inner"><CloudCog className="size-10 sm:size-12 text-slate-300 mb-4 animate-bounce" /><h3 className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-500">{t.init_context}</h3></div>
+          <div className="h-full min-h-100 bg-white border border-slate-200 border-dashed rounded-3xl flex flex-col items-center justify-center p-8 sm:p-16 text-center opacity-50 shadow-inner"><CloudCog className="size-10 sm:size-12 text-slate-300 mb-4 animate-bounce" /><h3 className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-500">{t.init_context}</h3></div>
         )}
       </div>
     </div>
