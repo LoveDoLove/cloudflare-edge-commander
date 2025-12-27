@@ -31,14 +31,9 @@ export function useCloudflareManager() {
     bulk: false,
   });
 
-  const [status, setStatus] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
   const [logs, setLogs] = useState<
     { msg: string; type: string; time: string }[]
   >([]);
-
   const [accounts, setAccounts] = useState<any[]>([]);
   const [zones, setZones] = useState<any[]>([]);
   const [dnsRecords, setDnsRecords] = useState<any[]>([]);
@@ -119,18 +114,10 @@ export function useCloudflareManager() {
     return data.result;
   };
 
-  /**
-   * Sanitizes content for the Cloudflare API.
-   * Cloudflare is very sensitive to TXT record formatting.
-   * If the content already contains literal escaped quotes from an export,
-   * we need to handle them carefully.
-   */
   const sanitizeContent = (content: string, type: string) => {
     if (!content) return "";
     if (type === "TXT") {
-      // 1. Remove literal escaped quotes like \" which can appear in exported JSON strings
       let clean = content.replace(/\\"/g, '"');
-      // 2. Remove surrounding quotes if the string is wrapped in them (Cloudflare adds its own)
       if (clean.startsWith('"') && clean.endsWith('"')) {
         clean = clean.substring(1, clean.length - 1);
       }
@@ -216,7 +203,6 @@ export function useCloudflareManager() {
     if (!zoneId || !editingRecordId || !editFormData) return;
     setLoadStates((s) => ({ ...s, dns: true }));
     try {
-      // Only send fields that are allowed to be updated
       const payload = {
         type: editFormData.type,
         name: editFormData.name,
@@ -330,15 +316,8 @@ export function useCloudflareManager() {
       let s = 0,
         f = 0;
       for (const r of imported) {
-        // Skip read-only or internal records if possible
-        if (r.meta?.read_only || r.meta?.email_routing) {
-          addLog(`Skipped read-only record: ${r.name} (${r.type})`, "info");
-          continue;
-        }
-
+        if (r.meta?.read_only || r.meta?.email_routing) continue;
         try {
-          // IMPORTANT: Construct a CLEAN payload.
-          // Do NOT send 'id', 'created_on', etc. from the export.
           const payload: any = {
             type: r.type,
             name: r.name,
@@ -346,14 +325,10 @@ export function useCloudflareManager() {
             proxied: !!r.proxied,
             ttl: r.ttl || 1,
           };
-
-          // Add priority for MX/SRV records if available
           if (r.priority !== undefined) payload.priority = r.priority;
-
           await fetchCF(`zones/${zoneId}/dns_records`, "POST", payload);
           s++;
         } catch (err: any) {
-          addLog(`Failed to import ${r.name}: ${err.message}`, "error");
           f++;
         }
       }
@@ -384,12 +359,14 @@ export function useCloudflareManager() {
         url: `https://cloudflare-dns.com/dns-query?name=${record.name}&type=${record.type}`,
         headers: { Accept: "application/dns-json" },
       },
+      // FIXED: Quad9 standard port 443 instead of 5053
       {
         name: "Quad9",
-        url: `https://dns.quad9.net:5053/dns-query?name=${record.name}&type=${record.type}`,
+        url: `https://dns.quad9.net/dns-query?name=${record.name}&type=${record.type}`,
         headers: { Accept: "application/dns-json" },
       },
     ];
+
     try {
       const checks = await Promise.all(
         resolvers.map(async (res) => {
@@ -487,7 +464,6 @@ export function useCloudflareManager() {
     labResults,
     setLabResults,
     loadStates,
-    status,
     logs,
     setNewDomainName,
     newDomainName,
