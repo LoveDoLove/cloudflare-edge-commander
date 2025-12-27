@@ -29,6 +29,7 @@ export function useCloudflareManager() {
     ca: false,
     ssl: false,
     bulk: false,
+    tunnels: false,
   });
 
   const [status, setStatus] = useState<{
@@ -42,6 +43,8 @@ export function useCloudflareManager() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [zones, setZones] = useState<any[]>([]);
   const [dnsRecords, setDnsRecords] = useState<any[]>([]);
+  const [tunnels, setTunnels] = useState<any[]>([]);
+
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
     null
   );
@@ -152,15 +155,27 @@ export function useCloudflareManager() {
     setSelectedAccountId(accId);
     setSelectedAccountName(accName);
     setZones([]);
-    setLoadStates((s) => ({ ...s, zone: true }));
+    setTunnels([]);
+    setLoadStates((s) => ({ ...s, zone: true, tunnels: true }));
+
     try {
       const data = await fetchCF(`zones?account.id=${accId}`);
       setZones(data);
       addLog(t.found_zones.replace("{n}", data.length.toString()), "success");
     } catch (err: any) {
-      addLog(`Error: ${err.message}`, "error");
+      addLog(`Zones Error: ${err.message}`, "error");
     } finally {
       setLoadStates((s) => ({ ...s, zone: false }));
+    }
+
+    try {
+      const tunnelData = await fetchCF(`accounts/${accId}/cfd_tunnel`);
+      setTunnels(tunnelData || []);
+      addLog(`Sync: ${tunnelData.length} tunnels found.`, "success");
+    } catch (err: any) {
+      addLog(`Tunnels Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, tunnels: false }));
     }
   };
 
@@ -298,7 +313,6 @@ export function useCloudflareManager() {
   const handleImportDns = async (file: File) => {
     if (!zoneId) return;
     setLoadStates((s) => ({ ...s, dns: true }));
-    addLog(`Importing ${file.name}...`, "info");
     try {
       const text = await file.text();
       let imported: any[] = [];
@@ -321,7 +335,6 @@ export function useCloudflareManager() {
             };
           });
       }
-
       let s = 0,
         f = 0;
       for (const r of imported) {
@@ -373,7 +386,6 @@ export function useCloudflareManager() {
         url: `https://dns.alidns.com/resolve?name=${record.name}&type=${record.type}`,
       },
     ];
-
     try {
       const checks = await Promise.all(
         resolvers.map(async (res) => {
@@ -526,5 +538,6 @@ export function useCloudflareManager() {
     handleImportDns,
     checkPropagation,
     propResults,
+    tunnels,
   };
 }
