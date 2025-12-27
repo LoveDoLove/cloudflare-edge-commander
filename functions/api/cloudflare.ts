@@ -1,45 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server';
-
-// Mandatory for Cloudflare Pages/Workers to ensure the route is handled by the Edge runtime
-export const runtime = 'edge';
-
-interface ProxyRequestBody {
-  endpoint: string;
-  email: string;
-  key: string;
-  method?: string;
-  body?: any;
-}
-
 /**
- * Handle OPTIONS requests (CORS/Pre-flight)
- * Even on same-origin, some browsers/proxies trigger this, 
- * and missing it can result in a 405 on certain Cloudflare configurations.
+ * Cloudflare Pages Function - API Proxy
+ * This replaces the Next.js API route for Static Exports.
+ * It is automatically deployed by Cloudflare when found in the /functions folder.
  */
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Email, X-Auth-Key',
-    },
-  });
-}
 
-export async function POST(req: NextRequest) {
+export async function onRequestPost(context: any) {
+  const { request } = context;
+
   try {
-    const data = await req.json() as ProxyRequestBody;
+    const data: any = await request.json();
     const { endpoint, email, key, method = 'GET', body } = data;
 
     if (!endpoint || !email || !key) {
-      return NextResponse.json(
-        { success: false, errors: [{ message: 'Missing required parameters' }] },
-        { status: 400 }
+      return new Response(
+        JSON.stringify({ success: false, errors: [{ message: 'Missing required parameters' }] }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Proxy the request to Cloudflare API
+    // Proxy the request directly to the Cloudflare API
     const cfResponse = await fetch(`https://api.cloudflare.com/client/v4/${endpoint}`, {
       method,
       headers: {
@@ -52,16 +31,29 @@ export async function POST(req: NextRequest) {
 
     const responseData = await cfResponse.json();
     
-    return NextResponse.json(responseData, { 
+    return new Response(JSON.stringify(responseData), {
       status: cfResponse.status,
       headers: {
+        'Content-Type': 'application/json',
         'Cache-Control': 'no-store, max-age=0',
-      }
+      },
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, errors: [{ message: 'Edge Proxy Error: ' + error.message }] },
-      { status: 500 }
+    return new Response(
+      JSON.stringify({ success: false, errors: [{ message: 'Functions Proxy Error: ' + error.message }] }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
+}
+
+// Handle pre-flight OPTIONS requests
+export async function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Email, X-Auth-Key',
+    },
+  });
 }
