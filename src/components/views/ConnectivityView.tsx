@@ -78,7 +78,7 @@ export const ConnectivityView = ({ state }: { state: any }) => {
               state.tunnels.map((tunnel: any) => (
                 <div key={tunnel.id} className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all group">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-black truncate max-w-[150px]">{tunnel.name}</span>
+                    <span className="text-xs font-black truncate max-w-37.5">{tunnel.name}</span>
                     <span className={`badge badge-xs border-none font-black text-[8px] uppercase px-2 py-2 ${
                       tunnel.status === 'healthy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
                     }`}>
@@ -98,7 +98,7 @@ export const ConnectivityView = ({ state }: { state: any }) => {
 
       {/* Right Column: Account & Context Registry */}
       <div className="space-y-6">
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 flex flex-col h-full min-h-[500px] overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 flex flex-col h-full min-h-125 overflow-hidden">
           <div className="p-6 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Globe className="size-5 text-slate-400" />
@@ -107,7 +107,7 @@ export const ConnectivityView = ({ state }: { state: any }) => {
             <span className="badge font-black text-[10px] bg-slate-200 border-none text-slate-600 px-3">{state.accounts.length}</span>
           </div>
           
-          <div className="p-6 space-y-3 overflow-y-auto max-h-[600px] custom-scrollbar-light">
+          <div className="p-6 space-y-3 overflow-y-auto max-h-150 custom-scrollbar-light">
             {state.accounts.length === 0 ? (
               <div className="py-20 text-center text-[10px] text-slate-400 font-black uppercase tracking-widest opacity-50 flex flex-col items-center gap-4">
                 <Loader2 className="size-10 animate-spin text-slate-200" />
