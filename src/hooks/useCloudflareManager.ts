@@ -119,9 +119,22 @@ export function useCloudflareManager() {
     return data.result;
   };
 
+  /**
+   * Sanitizes content for the Cloudflare API.
+   * Cloudflare is very sensitive to TXT record formatting.
+   * If the content already contains literal escaped quotes from an export,
+   * we need to handle them carefully.
+   */
   const sanitizeContent = (content: string, type: string) => {
+    if (!content) return "";
     if (type === "TXT") {
-      return content.replace(/^"|"$/g, "").replace(/\\"/g, '"');
+      // 1. Remove literal escaped quotes like \" which can appear in exported JSON strings
+      let clean = content.replace(/\\"/g, '"');
+      // 2. Remove surrounding quotes if the string is wrapped in them (Cloudflare adds its own)
+      if (clean.startsWith('"') && clean.endsWith('"')) {
+        clean = clean.substring(1, clean.length - 1);
+      }
+      return clean;
     }
     return content;
   };
@@ -203,14 +216,19 @@ export function useCloudflareManager() {
     if (!zoneId || !editingRecordId || !editFormData) return;
     setLoadStates((s) => ({ ...s, dns: true }));
     try {
-      const sanitized = {
-        ...editFormData,
+      // Only send fields that are allowed to be updated
+      const payload = {
+        type: editFormData.type,
+        name: editFormData.name,
         content: sanitizeContent(editFormData.content, editFormData.type),
+        proxied: editFormData.proxied,
+        ttl: editFormData.ttl,
+        priority: editFormData.priority,
       };
       await fetchCF(
         `zones/${zoneId}/dns_records/${editingRecordId}`,
         "PATCH",
-        sanitized
+        payload
       );
       const records = await fetchCF(`zones/${zoneId}/dns_records`);
       setDnsRecords(records);
@@ -288,7 +306,7 @@ export function useCloudflareManager() {
     setLoadStates((s) => ({ ...s, dns: true }));
     try {
       const text = await file.text();
-      let imported = [];
+      let imported: any[] = [];
       if (file.name.endsWith(".json")) {
         imported = JSON.parse(text);
       } else {
@@ -304,20 +322,38 @@ export function useCloudflareManager() {
               content: cols[2]?.replace(/"/g, "").trim(),
               proxied: cols[3]?.toLowerCase().includes("true"),
               ttl: parseInt(cols[4]) || 1,
+              priority: parseInt(cols[5]) || undefined,
             };
           });
       }
+
       let s = 0,
         f = 0;
       for (const r of imported) {
+        // Skip read-only or internal records if possible
+        if (r.meta?.read_only || r.meta?.email_routing) {
+          addLog(`Skipped read-only record: ${r.name} (${r.type})`, "info");
+          continue;
+        }
+
         try {
-          const sanitized = {
-            ...r,
+          // IMPORTANT: Construct a CLEAN payload.
+          // Do NOT send 'id', 'created_on', etc. from the export.
+          const payload: any = {
+            type: r.type,
+            name: r.name,
             content: sanitizeContent(r.content, r.type),
+            proxied: !!r.proxied,
+            ttl: r.ttl || 1,
           };
-          await fetchCF(`zones/${zoneId}/dns_records`, "POST", sanitized);
+
+          // Add priority for MX/SRV records if available
+          if (r.priority !== undefined) payload.priority = r.priority;
+
+          await fetchCF(`zones/${zoneId}/dns_records`, "POST", payload);
           s++;
-        } catch {
+        } catch (err: any) {
+          addLog(`Failed to import ${r.name}: ${err.message}`, "error");
           f++;
         }
       }
