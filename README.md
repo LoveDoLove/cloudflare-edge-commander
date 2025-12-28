@@ -6,18 +6,18 @@
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
-[![project_license][license-shield]][license-url]
+[![License][license-shield]][license-url]
 
 <br />
 <div align="center">
   <a href="https://github.com/LoveDoLove/cloudflare-edge-commander">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="images/logo.png" alt="Cloudflare Edge Commander" width="80" height="80">
   </a>
 
 <h3 align="center">Cloudflare Edge Commander</h3>
 
   <p align="center">
-    A lightweight Next.js control panel for managing Cloudflare accounts, zones, DNS records and simple network tooling (IPv6 utils, reverse mapping). Built to run on Cloudflare via OpenNext + Wrangler.
+    A lightweight Next.js control panel for managing Cloudflare accounts, zones, DNS records and useful network utilities. Built for deployment on Cloudflare using OpenNext + Wrangler.
     <br />
     <br />
     <a href="https://github.com/LoveDoLove/cloudflare-edge-commander"><strong>Explore the code »</strong></a>
@@ -35,26 +35,42 @@
 
 ## About The Project
 
-Cloudflare Edge Commander is a small admin dashboard built with Next.js and OpenNext for Cloudflare that makes it easy to:
+Cloudflare Edge Commander provides a simple UI to interact with Cloudflare's API through a secure server-side proxy. It focuses on:
 
-- Manage Cloudflare accounts and zones
-- Inspect and edit DNS records
-- Configure SSL/CA and zone settings
-- Run simple network lab utilities (IPv6 <-> arpa conversion, random IPv6 generation)
-- Stream live client-side logs to a console drawer
+- Managing Cloudflare accounts, zones and DNS records
+- Inspecting and editing DNS records easily
+- Configuring SSL/CA and common zone settings
+- Small network utilities (IPv6 <-> arpa conversion, random IPv6 generation, reverse mapping)
+- Streaming client-side logs to an on-page console
 
-The app runs server-side API proxying using a Cloudflare Pages Function at `functions/api/cloudflare.ts` (deployed via OpenNext/Wrangler). This keeps user credentials out of client-side requests.
+The server-side proxy lives in `functions/api/cloudflare.ts` and is intended to run as a Cloudflare Pages Function (OpenNext). Credentials are proxied from the server—do not store keys in the client.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Built With
 
-- **Next.js** (React + App Router)
-- **OpenNext.js / @opennextjs/cloudflare** (Cloudflare deployment integration)
+- **Next.js** (App Router + React)
+- **OpenNext / @opennextjs/cloudflare** (Cloudflare deployment integration)
 - **TypeScript**
-- **Tailwind CSS** + **DaisyUI** (UI)
+- **Tailwind CSS** + **DaisyUI**
 - **Lucide Icons**
-- **Wrangler** (Cloudflare worker config)
+- **Wrangler** (worker / Pages configuration)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## Table of Contents
+
+- [Getting Started](#getting-started)
+- [Features](#features)
+- [Usage](#usage)
+- [Security & Environment](#security--environment)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
+- [Acknowledgments](#acknowledgments)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -62,29 +78,41 @@ The app runs server-side API proxying using a Cloudflare Pages Function at `func
 
 ## Getting Started
 
-Follow these instructions to get a local copy up and running for development and deployment.
+Follow these instructions to get a local copy up and running.
 
 ### Prerequisites
 
 - Node.js 18+ and npm
-- A Cloudflare account (for API keys/tokens and deployment)
-- Wrangler CLI (dev dependency) — type generation script included in `package.json`
+- A Cloudflare account (for API tokens and deployment)
+- Wrangler CLI (used for Pages / Workers deployment)
 
 ### Installation
 
-1. Clone the repo
-   ```sh
+1. Clone the repo:
+   ```bash
    git clone https://github.com/LoveDoLove/cloudflare-edge-commander.git
    cd cloudflare-edge-commander
    ```
-2. Install dependencies
-   ```sh
-   npm install
+2. Build the project:
+   ```bash
+   npm run build
    ```
-3. (Optional) Generate Cloudflare types for local development
-   ```sh
-   npm run cf-typegen
+3. Deploy the project:
+   ```bash
+   npm run deploy
    ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## Features
+
+- Dashboard to manage Cloudflare accounts & zones
+- DNS record inspector and editor
+- Zone settings & SSL helper workflows
+- Network lab utilities (IPv6 tools, reverse mapping, random address generation)
+- Live client-side log console
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -94,41 +122,32 @@ Follow these instructions to get a local copy up and running for development and
 
 Run local development server:
 
-```sh
+```bash
 npm run dev
 ```
 
-Build for production:
+Build for production and test locally:
 
-```sh
+```bash
 npm run build
+npm run preview
 ```
 
-Start (server):
+Other useful scripts:
 
-```sh
-npm start
-```
-
-Deploy to Cloudflare (OpenNext + Wrangler):
-
-```sh
-npm run deploy
-```
-
-Other available commands (see `package.json`):
-- `npm run upload` — upload assets
-- `npm run preview` — preview with opennext
+- `npm run upload` — upload static assets
 - `npm run lint` — run ESLint
+- `npm run cf-typegen` — regenerate Cloudflare types
 
-### How API integration works
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-- The UI accepts Cloudflare credentials (Account email + Global API Key) and sends them to the server-side proxy at `POST /api/cloudflare`. On Cloudflare this route is implemented by the Pages Function at `functions/api/cloudflare.ts`.
-- The proxy forwards requests to the Cloudflare REST API and returns responses to the client. For production, prefer Cloudflare API Tokens with minimal scopes and server-side secrets.
+## Security & Environment
 
-**Security & Privacy:** This project does not persist Cloudflare API keys or account emails in any long-term storage; credentials are used only for the active session and proxied requests. You are responsible for actions performed with your credentials—prefer tokens with least privilege and use Wrangler secrets or environment variables for production.
+- Do **not** embed API keys or global API keys in client-side code.
+- Use Wrangler secrets or environment variables to store production credentials (e.g., `CF_API_TOKEN`, `CF_ACCOUNT_ID`).
+- Prefer API Tokens over Global API Keys and grant only the scopes needed by the app.
 
-> Security tip: use environment variables / Wrangler secrets for production credentials and avoid embedding keys in client-side source.
+**Note:** The local dev experience may accept temporary credentials for convenience, but treat them carefully and never commit them.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -136,13 +155,11 @@ Other available commands (see `package.json`):
 
 ## Project Structure
 
-Key files & folders:
-
-- `src/app/` — Next.js app router pages and layout
-- `functions/api/cloudflare.ts` — Cloudflare Pages Function proxy endpoint (handles `POST /api/cloudflare`)
-- `src/hooks/useCloudflareManager.ts` — primary application state and Cloudflare actions
+- `src/app/` — Next.js App Router pages and layout
 - `src/components/` — UI components and overlays
-- `wrangler.jsonc` — Cloudflare worker configuration
+- `src/hooks/` — hooks and cloudflare manager (`useCloudflareManager.ts`)
+- `functions/api/cloudflare.ts` — server-side proxy (Pages Function)
+- `wrangler.jsonc` — deployment configuration
 - `cloudflare-env.d.ts` — Cloudflare env types
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -151,15 +168,12 @@ Key files & folders:
 
 ## Contributing
 
-Contributions are welcome! Please follow this workflow:
+Contributions are welcome! Please open issues for bugs and feature requests, then send a pull request. Suggested workflow:
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-Please open issues for bugs or feature requests so we can triage and prioritize.
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit changes: `git commit -m "Add feature"`
+4. Push and open a PR
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -173,7 +187,7 @@ Please open issues for bugs or feature requests so we can triage and prioritize.
 
 ## License
 
-Distributed under the Apache License 2.0. See `LICENSE` for more information.
+Distributed under the Apache License 2.0. See `LICENSE` for details.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -181,9 +195,9 @@ Distributed under the Apache License 2.0. See `LICENSE` for more information.
 
 ## Contact
 
-Project Maintainer - https://github.com/LoveDoLove
+Maintainer: LoveDoLove — https://github.com/LoveDoLove
 
-Project Link: https://github.com/LoveDoLove/cloudflare-edge-commander
+Project: https://github.com/LoveDoLove/cloudflare-edge-commander
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -191,7 +205,7 @@ Project Link: https://github.com/LoveDoLove/cloudflare-edge-commander
 
 ## Acknowledgments
 
-- OpenNext (OpenNext.js) — Cloudflare integration
+- OpenNext (OpenNext.js)
 - Cloudflare docs & API
 - Best README Template
 - Tailwind Labs and DaisyUI
@@ -211,5 +225,4 @@ Project Link: https://github.com/LoveDoLove/cloudflare-edge-commander
 [issues-url]: https://github.com/LoveDoLove/cloudflare-edge-commander/issues
 [license-shield]: https://img.shields.io/github/license/LoveDoLove/cloudflare-edge-commander.svg?style=for-the-badge
 [license-url]: https://github.com/LoveDoLove/cloudflare-edge-commander/blob/master/LICENSE
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [product-screenshot]: public/images/screenshot.png
