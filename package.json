@@ -1,13 +1,15 @@
 {
 	"name": "cloudflare-edge-commander",
-	"version": "2.0.3",
+	"version": "2.0.4",
 	"private": true,
 	"scripts": {
-		"dev": "next dev --turbopack",
+    	"dev:next": "next dev --turbopack",
+    	"dev:wrangler": "wrangler pages dev public",
+    	"dev": "concurrently \"npm run dev:next\" \"npm run dev:wrangler\"",
 		"build": "next build",
 		"start": "next start",
 		"lint": "next lint",
-		"deploy": "wrangler pages deploy out",
+		"deploy": "next build && wrangler pages deploy out",
 		"upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
 		"preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
 		"cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
@@ -26,6 +28,7 @@
 		"@types/node": "^25.0.3",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
+		"concurrently": "^9.2.1",
 		"eslint": "^9",
 		"eslint-config-next": "^16.1.1",
 		"tailwindcss": "^4",
