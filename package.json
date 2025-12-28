@@ -1,10 +1,10 @@
 {
 	"name": "cloudflare-edge-commander",
-	"version": "2.0.3",
+	"version": "2.0.4",
 	"private": true,
 	"scripts": {
     	"dev:next": "next dev --turbopack",
-    	"dev:wrangler": "wrangler pages dev public --compatibility-date=2024-04-01 --proxy=3000",
+    	"dev:wrangler": "wrangler pages dev public",
     	"dev": "concurrently \"npm run dev:next\" \"npm run dev:wrangler\"",
 		"build": "next build",
 		"start": "next start",
