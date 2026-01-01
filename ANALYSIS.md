@@ -1,40 +1,48 @@
-# Project Analysis: Cloudflare Edge Commander
+# Analysis: Cloudflare Edge Commander
 
-## Technical Stack
+This project is a high-performance, refined management interface for Cloudflare services, referred to as the **Platinum Standard**.
 
-- **Framework**: Next.js (App Router) with Wrangler / OpenNext
-- **Styling**: TailwindCSS + Daisy UI
-- **Deployment**: Cloudflare Pages
-- **Language Support**: Multi-language (EN, CN) localized via `src/i18n/translations.ts`
-- **Architecture**: Component-based views residing in `src/components/views/`
-- **State Management**: Utils and state passed as props to view components
+## 1. Technical Stack
 
-## Core Features & Logic
+- **Framework**: [Next.js](https://nextjs.org/) (App Router) + [Wrangler](https://developers.cloudflare.com/workers/wrangler/) (Cloudflare Pages).
+- **Styling**: [TailwindCSS](https://tailwindcss.com/) + [Daisy UI](https://daisyui.com/).
+- **Deployment**: [Cloudflare Pages](https://pages.cloudflare.com/) (Static/Hybrid).
+- **Internationalization**: Centralized `src/i18n/translations.ts` supporting `en` and `zh`.
+- **Backend Communication**: API Proxy via `functions/api/cloudflare.ts`.
 
-- **Cloudflare Management**: Zones, DNS records, SSL/CA settings.
-  - Mapping visualization.
-- **Subnet Intelligence Lab**:
-  - IPv4/IPv6 CIDR calculations.
-  - Interactive mask and range feedback.
-- **Global Security (Quick-Sec)**:
-  - "Nuclear" button for instant Under Attack mode elevation across all zones.
-- **Logging**: Client-side execution logs streamed to a console component.
+## 2. Core Architecture
 
-## File Organization Patterns
+The application follows a **Provider/View pattern**:
 
-- **Views**: `src/components/views/[Name]View.tsx` (e.g., `NetworkLabView.tsx`, `EdgeManagerView.tsx`, `SubnetLabView.tsx`)
-- **Overlays**: `src/components/Overlays.tsx` for modal-like interactions.
-- **Hooks**: `src/hooks/useCloudflareManager.ts` for API interaction logic.
-- **Translations**: Centralized in `src/i18n/translations.ts`.
+- **Main Hook**: `useCloudflareManager.ts` manages all global state, Cloudflare API orchestration, and logic.
+- **View Pattern**: Each feature is a separate component in `src/components/views/` (e.g., `SubnetLabView.tsx`).
+- **Data Flow**: The root `page.tsx` passes a `state` object and a `utils` object to all view components.
+  - `state`: Contains `t` (translations), `logs`, `activeTab`, and Cloudflare data (`zones`, `dnsRecords`, etc.).
+  - `utils`: Contains helper functions (e.g., `cidrToMask`, `fetchCF`, `addLog`).
 
-## Design Principles (Platinum Standard)
+## 3. Design DNA (Platinum Standard)
 
-- **Aesthetics**: High-contrast, modern UI (Tailwind 4.0+ style), glassmorphism, and bold typography.
-- **Typography**: Heavy use of `font-black`, `uppercase`, and `tracking-widest`.
-- **Components**: Rounded corners (`rounded-4xl`, `rounded-2xl`), subtle shadows, and micro-animations (`animate-in`).
+The UI is designed to feel premium, futuristic, and industrial:
 
-## Deployment Context
+- **Typography**: Heavily utilizes `font-black`, `uppercase`, and `tracking-widest`.
+- **Colors**: High-contrast (Slate 950/900 for dark elements, pure white/slate-50 for light).
+- **Components**:
+  - `rounded-4xl` for primary containers.
+  - `rounded-2xl` for inputs and buttons.
+  - Glassmorphism and subtle shadows (`shadow-xl shadow-slate-200/40`).
+- **Animations**: Framer-motion style entry (`animate-in fade-in slide-in-from-bottom-6`).
 
-- Designed for Cloudflare Pages.
-- Static assets handled by OpenNext.
-- Sever-side logic in `functions/api/cloudflare.ts`.
+## 4. Feature Logic Patterns
+
+- **IPv6 Intelligence**: Implementation logic for converting IPv6 to `ip6.arpa` domains and CIDR calculations.
+- **Reverse Mapping Example**:
+  - Input: `2001:470:24:5dd::/64`
+  - Domain Mapping: `d.d.5.0.4.2.0.0.0.7.4.0.1.0.0.2.ip6.arpa`
+- **Zone Focus**: All management features (DNS, SSL, CA, Tunnels) are dynamically scoped to the `selectedZoneName`.
+
+## 5. Deployment & Maintenance
+
+- **Static First**: Designed to run as a static site on Cloudflare Pages.
+- **Dynamic Updates**: Client-side re-fetching when `zoneId` changes.
+- **Standardized Naming**: All view files must suffix with `View.tsx`.
+- **Translation Guardrails**: Hardcoded strings are strictly forbidden.
