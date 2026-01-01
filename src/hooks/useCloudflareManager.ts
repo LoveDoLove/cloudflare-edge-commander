@@ -6,7 +6,14 @@ import { translations, Language } from "@/i18n/translations";
 export function useCloudflareManager() {
   const [lang, setLangState] = useState<Language>("en");
   const [activeTab, setActiveTab] = useState<
-    "auth" | "edge" | "utils" | "docs" | "about" | "privacy" | "terms"
+    | "auth"
+    | "edge"
+    | "utils"
+    | "subnet"
+    | "docs"
+    | "about"
+    | "privacy"
+    | "terms"
   >("auth");
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [consoleHeight, setConsoleHeight] = useState(280);

@@ -12,15 +12,17 @@
 ## Core Features & Logic
 
 - **Cloudflare Management**: Zones, DNS records, SSL/CA settings.
-- **Intelligence Engine (Network Lab)**:
-  - IPv6 to `ip6.arpa` conversion.
-  - Random IPv6 generation.
   - Mapping visualization.
+- **Subnet Intelligence Lab**:
+  - IPv4/IPv6 CIDR calculations.
+  - Interactive mask and range feedback.
+- **Global Security (Quick-Sec)**:
+  - "Nuclear" button for instant Under Attack mode elevation across all zones.
 - **Logging**: Client-side execution logs streamed to a console component.
 
 ## File Organization Patterns
 
-- **Views**: `src/components/views/[Name]View.tsx` (e.g., `NetworkLabView.tsx`, `EdgeManagerView.tsx`)
+- **Views**: `src/components/views/[Name]View.tsx` (e.g., `NetworkLabView.tsx`, `EdgeManagerView.tsx`, `SubnetLabView.tsx`)
 - **Overlays**: `src/components/Overlays.tsx` for modal-like interactions.
 - **Hooks**: `src/hooks/useCloudflareManager.ts` for API interaction logic.
 - **Translations**: Centralized in `src/i18n/translations.ts`.

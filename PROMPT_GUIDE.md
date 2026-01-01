@@ -44,4 +44,5 @@ To maintain the "Platinum Standard" of this project, follow these guidelines whe
 
 - Group related view files in `src/components/views/`.
 - Keep `src/i18n/translations.ts` sorted/categorized.
-- Reference `src/components/views/NetworkLabView.tsx` as the reference for complex logic & styling.
+- Reference `src/components/views/NetworkLabView.tsx` and `src/components/views/SubnetLabView.tsx` for complex logic & styling.
+- Global utilities (IP math, parsing) should be centralized in `src/app/page.tsx` within the `utils` object.
