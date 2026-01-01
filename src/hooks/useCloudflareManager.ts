@@ -547,27 +547,37 @@ export function useCloudflareManager() {
     propResults,
     tunnels,
     handleNuclearBtn: async () => {
+      if (!zoneId) return;
+      if (
+        !window.confirm(
+          t.nuclear_confirm ||
+            `INITIATE NUCLEAR PROTOCOL for ${selectedZoneName}?`
+        )
+      )
+        return;
+
       setLoadStates((s) => ({ ...s, bulk: true }));
       addLog(
-        "INITIATING NUCLEAR PROTOCOL: Elevating all zones to Under Attack mode...",
+        `NUCLEAR PROTOCOL: Elevating ${selectedZoneName} to Under Attack mode...`,
         "error"
       );
-      let successCount = 0;
-      for (const zone of zones) {
-        try {
-          await fetchCF(`zones/${zone.id}/settings/security_level`, "PATCH", {
-            value: "under_attack",
-          });
-          successCount++;
-        } catch (e: any) {
-          addLog(`Failed for ${zone.name}: ${e.message}`, "error");
-        }
+
+      try {
+        await fetchCF(`zones/${zoneId}/settings/security_level`, "PATCH", {
+          value: "under_attack",
+        });
+        addLog(
+          `NUCLEAR PROTOCOL: ${selectedZoneName} successfully elevated.`,
+          "success"
+        );
+      } catch (e: any) {
+        addLog(
+          `Nuclear Protocol Error for ${selectedZoneName}: ${e.message}`,
+          "error"
+        );
+      } finally {
+        setLoadStates((s) => ({ ...s, bulk: false }));
       }
-      addLog(
-        `NUCLEAR PROTOCOL COMPLETE: ${successCount}/${zones.length} zones elevated.`,
-        "success"
-      );
-      setLoadStates((s) => ({ ...s, bulk: false }));
     },
   };
 }

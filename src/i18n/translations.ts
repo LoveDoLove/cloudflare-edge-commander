@@ -127,7 +127,9 @@ export const translations = {
     // Security
     quick_sec: "Quick Security",
     nuclear_btn: "Under Attack Mode",
-    nuclear_desc: "Instantly elevate security levels across all zones.",
+    nuclear_desc: "Instantly elevate security level for this zone.",
+    nuclear_confirm:
+      "INITIATE NUCLEAR PROTOCOL? This will instantly elevate the current zone to 'Under Attack' mode.",
   },
   zh: {
     // 导航与侧边栏
@@ -253,7 +255,9 @@ export const translations = {
 
     // 安全
     quick_sec: "快速安全",
-    nuclear_btn: "Under Attack 模式",
-    nuclear_desc: "立即提升所有区域的安全级别。",
+    nuclear_btn: "强力防御模式",
+    nuclear_desc: "立即提升当前站点的安全级别。",
+    nuclear_confirm:
+      "启动核能协议？这将立即把当前站点的安全级别提升至‘强力防御’模式。",
   },
 };
