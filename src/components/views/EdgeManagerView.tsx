@@ -141,6 +141,26 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                   </div>
                 </div>
 
+                {/* Quick-Sec Nuclear Button */}
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                      {t.quick_sec}
+                    </span>
+                    <button
+                      onClick={state.handleNuclearBtn}
+                      disabled={state.loadStates.bulk}
+                      className="btn btn-xs bg-rose-600 hover:bg-rose-700 text-white border-none rounded-xl font-black uppercase h-10 px-4 shadow-lg shadow-rose-200 animate-pulse hover:animate-none group transition-all"
+                    >
+                      <Shield className="size-3.5 mr-2 group-hover:rotate-12 transition-transform" />
+                      {t.nuclear_btn}
+                    </button>
+                  </div>
+                  <p className="text-[8px] font-bold text-slate-300 uppercase tracking-tight">
+                    {t.nuclear_desc}
+                  </p>
+                </div>
+
                 <div className="flex flex-1 items-center gap-2">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />

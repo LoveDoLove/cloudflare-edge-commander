@@ -539,5 +539,28 @@ export function useCloudflareManager() {
     checkPropagation,
     propResults,
     tunnels,
+    handleNuclearBtn: async () => {
+      setLoadStates((s) => ({ ...s, bulk: true }));
+      addLog(
+        "INITIATING NUCLEAR PROTOCOL: Elevating all zones to Under Attack mode...",
+        "error"
+      );
+      let successCount = 0;
+      for (const zone of zones) {
+        try {
+          await fetchCF(`zones/${zone.id}/settings/security_level`, "PATCH", {
+            value: "under_attack",
+          });
+          successCount++;
+        } catch (e: any) {
+          addLog(`Failed for ${zone.name}: ${e.message}`, "error");
+        }
+      }
+      addLog(
+        `NUCLEAR PROTOCOL COMPLETE: ${successCount}/${zones.length} zones elevated.`,
+        "success"
+      );
+      setLoadStates((s) => ({ ...s, bulk: false }));
+    },
   };
 }
