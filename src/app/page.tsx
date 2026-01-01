@@ -23,9 +23,9 @@ import { EdgeManagerView } from "@/components/views/EdgeManagerView";
 import { NetworkLabView } from "@/components/views/NetworkLabView";
 import { SubnetLabView } from "@/components/views/SubnetLabView";
 import { DnsDocsView } from "@/components/views/DnsDocsView";
-import { AboutView } from "@/components/views/AboutViews";
-import { PrivacyView } from "@/components/views/PrivacyViews";
-import { TermsView } from "@/components/views/TermsViews";
+import { AboutView } from "@/components/views/AboutView";
+import { PrivacyView } from "@/components/views/PrivacyView";
+import { TermsView } from "@/components/views/TermsView";
 import {
   DeleteConfirmationModal,
   BulkDeleteModal,
