@@ -149,10 +149,29 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                     <button
                       onClick={state.handleNuclearBtn}
                       disabled={state.loadStates.bulk}
-                      className="btn btn-xs bg-rose-600 hover:bg-rose-700 text-white border-none rounded-lg font-black uppercase h-8 px-3 shadow-md shadow-rose-200 animate-pulse hover:animate-none group transition-all"
+                      className={`btn btn-xs ${
+                        state.securityLevel === "under_attack"
+                          ? "bg-rose-500 hover:bg-rose-600 shadow-rose-200"
+                          : "bg-slate-900 hover:bg-black shadow-slate-200"
+                      } text-white border-none rounded-lg font-black uppercase h-9 px-3 shadow-lg group transition-all flex items-center gap-2`}
                     >
-                      <Shield className="size-3 mr-2 group-hover:rotate-12 transition-transform" />
-                      {t.nuclear_btn}
+                      <Shield
+                        className={`size-3.5 ${
+                          state.securityLevel === "under_attack"
+                            ? "animate-pulse"
+                            : "group-hover:rotate-12"
+                        } transition-all`}
+                      />
+                      <span className="tracking-tight">{t.nuclear_btn}</span>
+                      <div
+                        className={`px-1.5 py-0.5 rounded-md text-[8px] font-black ${
+                          state.securityLevel === "under_attack"
+                            ? "bg-white text-rose-600"
+                            : "bg-slate-700 text-slate-300"
+                        }`}
+                      >
+                        {state.securityLevel === "under_attack" ? "ON" : "OFF"}
+                      </div>
                     </button>
                   </div>
                 </div>

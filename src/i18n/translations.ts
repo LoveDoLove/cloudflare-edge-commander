@@ -130,6 +130,7 @@ export const translations = {
     nuclear_desc: "Instantly elevate security level for this zone.",
     nuclear_confirm:
       "INITIATE NUCLEAR PROTOCOL? This will instantly elevate the current zone to 'Under Attack' mode.",
+    disable_under_attack: "Disable Layer 7 Defense",
   },
   zh: {
     // 导航与侧边栏
@@ -259,5 +260,6 @@ export const translations = {
     nuclear_desc: "立即提升当前站点的安全级别。",
     nuclear_confirm:
       "启动核能协议？这将立即把当前站点的安全级别提升至‘强力防御’模式。",
+    disable_under_attack: "解除七层防御状态",
   },
 };

@@ -59,6 +59,7 @@ export function useCloudflareManager() {
     null
   );
   const [selectedZoneName, setSelectedZoneName] = useState<string | null>(null);
+  const [securityLevel, setSecurityLevel] = useState<string>("medium");
 
   const [caProvider, setCaProvider] = useState<string>("google");
   const [sslMode, setSslMode] = useState<string>("strict");
@@ -190,15 +191,30 @@ export function useCloudflareManager() {
     setZoneId(id);
     setSelectedZoneName(name);
     setDnsRecords([]);
+    setSecurityLevel("medium"); // Reset to neutral state while loading new zone
     setLoadStates((s) => ({ ...s, cert: true, dns: true }));
     try {
+      // Fetch Universal SSL info
       try {
         const universal = await fetchCF(`zones/${id}/ssl/universal/settings`);
         if (universal?.certificate_authority)
           setCaProvider(universal.certificate_authority);
+      } catch (e) {}
+
+      // Fetch SSL Mode
+      try {
         const ssl = await fetchCF(`zones/${id}/settings/ssl`);
         if (ssl?.value) setSslMode(ssl.value);
       } catch (e) {}
+
+      // Fetch Security Level (Under Attack Status)
+      try {
+        const sec = await fetchCF(`zones/${id}/settings/security_level`);
+        if (sec?.value) {
+          setSecurityLevel(sec.value);
+        }
+      } catch (e) {}
+
       const records = await fetchCF(`zones/${id}/dns_records`);
       setDnsRecords(records || []);
       addLog(t.sync_done, "success");
@@ -487,6 +503,7 @@ export function useCloudflareManager() {
     sslMode,
     setSslMode,
     handleApplySSL,
+    securityLevel,
     ipv6Input,
     setIpv6Input,
     labResults,
@@ -548,31 +565,36 @@ export function useCloudflareManager() {
     tunnels,
     handleNuclearBtn: async () => {
       if (!zoneId) return;
+      const isUnderAttack = securityLevel === "under_attack";
+      const targetLevel = isUnderAttack ? "medium" : "under_attack";
+      const actionLabel = isUnderAttack ? "DISABLE" : "ENABLE";
+
       if (
         !window.confirm(
           t.nuclear_confirm ||
-            `INITIATE NUCLEAR PROTOCOL for ${selectedZoneName}?`
+            `PROTOCOL OVERRIDE: ${actionLabel} Under Attack mode for ${selectedZoneName}?`
         )
       )
         return;
 
       setLoadStates((s) => ({ ...s, bulk: true }));
       addLog(
-        `NUCLEAR PROTOCOL: Elevating ${selectedZoneName} to Under Attack mode...`,
-        "error"
+        `SECURITY PROTOCOL: Setting ${selectedZoneName} to ${targetLevel}...`,
+        isUnderAttack ? "info" : "error"
       );
 
       try {
         await fetchCF(`zones/${zoneId}/settings/security_level`, "PATCH", {
-          value: "under_attack",
+          value: targetLevel,
         });
+        setSecurityLevel(targetLevel);
         addLog(
-          `NUCLEAR PROTOCOL: ${selectedZoneName} successfully elevated.`,
+          `SECURITY PROTOCOL: ${selectedZoneName} is now ${targetLevel}.`,
           "success"
         );
       } catch (e: any) {
         addLog(
-          `Nuclear Protocol Error for ${selectedZoneName}: ${e.message}`,
+          `Security Protocol Error for ${selectedZoneName}: ${e.message}`,
           "error"
         );
       } finally {
