@@ -1,74 +1,46 @@
 # Prompt Guide: Cloudflare Edge Commander
 
-Use this guide to ensure all future AI interactions adhere to the **Platinum Standard** of this project.
+Follow these guidelines to ensure consistency and adherence to the **Platinum Standard**.
 
-## 1. Core Implementation Rules
+## 1. Core Instructions
 
-### Technology & Framework
+- **Framework**: Next.js App Router with Wrangler integration.
+- **Styling**: EXCLUSIVELY use **TailwindCSS** + **Daisy UI**. Avoid custom CSS unless absolutely necessary.
+- **Deployment**: Design for **Cloudflare Pages Static Sites**. No server-side dynamic routing that requires a node server.
+- **Language**: Support `en` and `zh`. All text keys must be added to `src/i18n/translations.ts`.
 
-- **Framework**: Only use Next.js App Router patterns.
-- **Styling**: Use **TailwindCSS** + **Daisy UI**.
-- **Deployment**: Must be compatible with Cloudflare Pages static site deployment.
+## 2. Component Design (Platinum UI)
 
-### Development Standards
-
-- **Translations**: NEVER hardcode text.
-  1. Add translations to `src/i18n/translations.ts` for both `en` and `zh`.
-  2. Access via `state.t.key`.
-- **Component Naming**:
-  - Main feature blocks: `src/components/views/[FeatureName]View.tsx`.
-  - Reusable parts: `src/components/[Name].tsx`.
-- **State Pattern**:
-  - View components receive `{ state, utils }`.
-  - Use `state.addLog(msg, 'success'|'info'|'error')` for system feedback.
-  - Update local state only for UI toggles; global data belongs in the hook.
-
-## 2. Design DNA (Platinum UI)
-
-### Typography
-
+- **Containers**: Use `bg-white border border-slate-200 rounded-4xl shadow-xl shadow-slate-200/40`.
+- **Inner Cards**: Use `bg-slate-950 rounded-2xl border border-slate-800` for data/code displays.
+- **Buttons**: `h-14 rounded-2xl font-black uppercase text-[10px] tracking-widest`.
+- **Inputs**: `rounded-2xl border-slate-200 h-14`.
 - **Headers**: `font-black text-slate-900 uppercase tracking-tight`.
-- **Labels**: `text-[10px] font-black uppercase text-slate-600 tracking-wider`.
-- **System Text**: Use `font-mono font-bold` for IPs, IDs, and hashes.
 
-### Aesthetics
+## 3. Development Rules
 
-- **Main Cards**: `bg-white border border-slate-200 rounded-4xl shadow-xl shadow-slate-200/40`.
-- **Data Cards**: `bg-slate-950 rounded-2xl border border-slate-800`.
-- **Interactive**: Buttons should be `rounded-2xl font-black uppercase text-[10px] tracking-widest h-14`.
+- **Zone-Centricity**: Features **MUST** be based on the selected zone. UI must update dynamically when `selectedZoneName` or `zoneId` changes.
+- **Naming**:
+  - Main feature components: `src/components/views/[Name]View.tsx`.
+  - Props usage: Always destructure `{ state, utils }`.
+- **Logic**:
+  - Use `state.addLog(msg, 'success'|'info'|'error')` for all operation feedback.
+  - Implement IPv6 mapping logic by expanding, reversing, and dot-separating nibbles before appending `.ip6.arpa`.
 
-## 3. Specific Logic Requirements
+## 4. Template for Future Features
 
-### IPv6 Reverse Mapping (`ip6.arpa`)
-
-When implementing IPv6 tools, follow the standard reverse mapping:
-
-- Target: `d.d.5.0.4.2.0.0.0.7.4.0.1.0.0.2.ip6.arpa`
-- Example Logic:
-  1. Expand IPv6 to full 32-hex nibbles.
-  2. Reverse the nibbles.
-  3. Dot-separate each nibble.
-  4. Append `.ip6.arpa`.
-
-### Zone Dynamics
-
-- Features must react dynamically to the `selectedZoneName`.
-- If no zone is selected, display a "System Idle" or "Select Zone" state.
-
-## 4. Prompt Template for New Views
-
-When requesting a new feature, use this structure:
-
-> "Implement a new [FeatureName]View component.
+> Use the following "Platinum" prompting pattern:
 >
-> 1. **Location**: Create `src/components/views/[FeatureName]View.tsx`.
-> 2. **UI**: Apply the Platinum Standard using Tailwind + DaisyUI (rounded-4xl containers, high contrast).
-> 3. **Logic**: Integrate with the existing `state` and `utils` objects.
-> 4. **Translations**: Update `src/i18n/translations.ts` with labels for [List of labels].
-> 5. **Reference**: Mirror the layout patterns found in `SubnetLabView.tsx`."
+> "Develop the [FeatureName]View component.
+>
+> 1. **Component**: Create `src/components/views/[FeatureName]View.tsx`.
+> 2. **Design**: Use Tailwind + DaisyUI, following the 'Platinum Standard' (rounded-4xl, Slate/White contrast).
+> 3. **Context**: Ensure it is dynamically scoped to the selected Cloudflare Zone.
+> 4. **Translation**: Register all UI labels in `src/i18n/translations.ts` for both `en` and `zh` before implementation.
+> 5. **Props**: Consume `{ state, utils }` and use `utils.fetchCF` for API calls."
 
 ## 5. Maintenance Checklist
 
-- Ensure `src/i18n/translations.ts` remains alphabetical or categorized by view.
-- Always include both English and Chinese translations.
-- Run `npm run lint` before finalizing code.
+- Always verify `npm run lint`.
+- Ensure new folders/files follow the established camelCase/PascalCase naming.
+- Check that all dynamic updates are reflected in the `Process Monitor` via `addLog`.
