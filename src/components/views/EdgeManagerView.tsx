@@ -141,42 +141,78 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                   </div>
                 </div>
 
-                <div className="flex flex-1 items-center gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder={t.search_placeholder}
-                      value={state.searchTerm}
-                      onChange={(e) => state.setSearchTerm(e.target.value)}
-                      className="input input-sm bg-slate-50 border-slate-200 w-full pl-9 rounded-xl text-[10px] font-bold h-10 focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all"
-                    />
-                  </div>
-                  {/* Task 1 Buttons */}
-                  <div className="flex gap-1.5 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                      {t.quick_sec}
+                    </span>
                     <button
-                      onClick={state.handleExportDns}
-                      className="btn btn-sm btn-ghost text-slate-400 hover:text-indigo-600 p-2"
-                      title={t.export_dns}
+                      onClick={state.handleNuclearBtn}
+                      disabled={state.loadStates.bulk}
+                      className={`btn btn-xs ${
+                        state.securityLevel === "under_attack"
+                          ? "bg-rose-500 hover:bg-rose-600 shadow-rose-200"
+                          : "bg-slate-900 hover:bg-black shadow-slate-200"
+                      } text-white border-none rounded-lg font-black uppercase h-9 px-3 shadow-lg group transition-all flex items-center gap-2`}
                     >
-                      <Download className="size-4" />
-                    </button>
-                    <label
-                      className="btn btn-sm btn-ghost text-slate-400 hover:text-emerald-600 p-2 cursor-pointer"
-                      title={t.import_dns}
-                    >
-                      <Upload className="size-4" />
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept=".csv,.json"
-                        onChange={(e) =>
-                          e.target.files?.[0] &&
-                          state.handleImportDns(e.target.files[0])
-                        }
+                      <Shield
+                        className={`size-3.5 ${
+                          state.securityLevel === "under_attack"
+                            ? "animate-pulse"
+                            : "group-hover:rotate-12"
+                        } transition-all`}
                       />
-                    </label>
+                      <span className="tracking-tight">{t.nuclear_btn}</span>
+                      <div
+                        className={`px-1.5 py-0.5 rounded-md text-[8px] font-black ${
+                          state.securityLevel === "under_attack"
+                            ? "bg-white text-rose-600"
+                            : "bg-slate-700 text-slate-300"
+                        }`}
+                      >
+                        {state.securityLevel === "under_attack" ? "ON" : "OFF"}
+                      </div>
+                    </button>
                   </div>
+                </div>
+              </div>
+
+              {/* Action & Search Toolbar */}
+              <div className="flex items-center gap-4 bg-slate-50/50 p-2 rounded-2xl border border-slate-100/50">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder={t.search_placeholder}
+                    value={state.searchTerm}
+                    onChange={(e) => state.setSearchTerm(e.target.value)}
+                    className="input input-sm bg-white border-slate-200 w-full pl-9 rounded-xl text-[10px] font-bold h-10 focus:ring-4 focus:ring-indigo-50 transition-all shadow-xs"
+                  />
+                </div>
+
+                <div className="flex gap-1 pr-1 border-l border-slate-200 pl-3">
+                  <button
+                    onClick={state.handleExportDns}
+                    className="btn btn-sm btn-ghost text-slate-400 hover:text-indigo-600 p-2"
+                    title={t.export_dns}
+                  >
+                    <Download className="size-4" />
+                  </button>
+                  <label
+                    className="btn btn-sm btn-ghost text-slate-400 hover:text-emerald-600 p-2 cursor-pointer"
+                    title={t.import_dns}
+                  >
+                    <Upload className="size-4" />
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".csv,.json"
+                      onChange={(e) =>
+                        e.target.files?.[0] &&
+                        state.handleImportDns(e.target.files[0])
+                      }
+                    />
+                  </label>
                 </div>
               </div>
 

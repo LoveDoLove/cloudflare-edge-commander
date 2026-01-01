@@ -112,6 +112,25 @@ export const translations = {
     syncing_tunnels: "Syncing Tunnels...",
     tunnel_connected: "Connected",
     tunnel_inactive: "Inactive",
+
+    // Subnet Lab
+    nav_subnet: "Subnet Lab",
+    subnet_title: "Subnet Intelligence Lab",
+    ip_subnet_block: "IP Address / CIDR",
+    calc_subnet: "Calculate",
+    subnet_mask: "Subnet Mask",
+    network_addr: "Network Address",
+    broadcast_addr: "Broadcast Address",
+    host_range: "Host Range",
+    total_hosts: "Total Hosts",
+
+    // Security
+    quick_sec: "Quick Security",
+    nuclear_btn: "Under Attack Mode",
+    nuclear_desc: "Instantly elevate security level for this zone.",
+    nuclear_confirm:
+      "INITIATE NUCLEAR PROTOCOL? This will instantly elevate the current zone to 'Under Attack' mode.",
+    disable_under_attack: "Disable Layer 7 Defense",
   },
   zh: {
     // 导航与侧边栏
@@ -223,5 +242,24 @@ export const translations = {
     syncing_tunnels: "正在同步隧道...",
     tunnel_connected: "已连接",
     tunnel_inactive: "未激活",
+
+    // 子网实验室
+    nav_subnet: "子网实验室",
+    subnet_title: "子网情报实验室",
+    ip_subnet_block: "IP 地址 / CIDR",
+    calc_subnet: "计算",
+    subnet_mask: "子网掩码",
+    network_addr: "网络地址",
+    broadcast_addr: "广播地址",
+    host_range: "可用主机范围",
+    total_hosts: "总主机数",
+
+    // 安全
+    quick_sec: "快速安全",
+    nuclear_btn: "强力防御模式",
+    nuclear_desc: "立即提升当前站点的安全级别。",
+    nuclear_confirm:
+      "启动核能协议？这将立即把当前站点的安全级别提升至‘强力防御’模式。",
+    disable_under_attack: "解除七层防御状态",
   },
 };
