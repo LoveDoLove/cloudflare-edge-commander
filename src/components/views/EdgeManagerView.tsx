@@ -141,39 +141,24 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                   </div>
                 </div>
 
-                {/* Quick-Sec Nuclear Button */}
-                <div className="flex flex-col items-end gap-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                      {t.quick_sec}
-                    </span>
-                    <button
-                      onClick={state.handleNuclearBtn}
-                      disabled={state.loadStates.bulk}
-                      className="btn btn-xs bg-rose-600 hover:bg-rose-700 text-white border-none rounded-xl font-black uppercase h-10 px-4 shadow-lg shadow-rose-200 animate-pulse hover:animate-none group transition-all"
-                    >
-                      <Shield className="size-3.5 mr-2 group-hover:rotate-12 transition-transform" />
-                      {t.nuclear_btn}
-                    </button>
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-end gap-1 border-r border-slate-100 pr-4 mr-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                        {t.quick_sec}
+                      </span>
+                      <button
+                        onClick={state.handleNuclearBtn}
+                        disabled={state.loadStates.bulk}
+                        className="btn btn-xs bg-rose-600 hover:bg-rose-700 text-white border-none rounded-xl font-black uppercase h-9 px-4 shadow-lg shadow-rose-200 animate-pulse hover:animate-none group transition-all"
+                      >
+                        <Shield className="size-3 mr-2 group-hover:rotate-12 transition-transform" />
+                        {t.nuclear_btn}
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-[8px] font-bold text-slate-300 uppercase tracking-tight">
-                    {t.nuclear_desc}
-                  </p>
-                </div>
 
-                <div className="flex flex-1 items-center gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder={t.search_placeholder}
-                      value={state.searchTerm}
-                      onChange={(e) => state.setSearchTerm(e.target.value)}
-                      className="input input-sm bg-slate-50 border-slate-200 w-full pl-9 rounded-xl text-[10px] font-bold h-10 focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all"
-                    />
-                  </div>
-                  {/* Task 1 Buttons */}
-                  <div className="flex gap-1.5 shrink-0">
+                  <div className="flex gap-1">
                     <button
                       onClick={state.handleExportDns}
                       className="btn btn-sm btn-ghost text-slate-400 hover:text-indigo-600 p-2"
@@ -197,6 +182,20 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                       />
                     </label>
                   </div>
+                </div>
+              </div>
+
+              {/* Sub-Header Toolbar */}
+              <div className="flex items-center gap-4 bg-slate-50/50 p-2 rounded-2xl border border-slate-100/50">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder={t.search_placeholder}
+                    value={state.searchTerm}
+                    onChange={(e) => state.setSearchTerm(e.target.value)}
+                    className="input input-sm bg-white border-slate-200 w-full pl-9 rounded-xl text-[10px] font-bold h-10 focus:ring-4 focus:ring-indigo-50 transition-all shadow-xs"
+                  />
                 </div>
               </div>
 
