@@ -10,7 +10,6 @@ import {
   ShieldCheck,
   Terminal,
   Server,
-  Radio,
   Database,
 } from "lucide-react";
 
@@ -94,85 +93,6 @@ export const ConnectivityView = ({ state }: { state: any }) => {
                 t.establish_session
               )}
             </button>
-          </div>
-        </div>
-
-        {/* Task 3: Tunnel Registry Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 text-white overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-3xl rounded-full" />
-          <div className="flex items-center justify-between border-b border-white/5 pb-4 relative z-10">
-            <div className="flex items-center gap-4">
-              <div className="size-12 bg-white/5 text-indigo-400 rounded-2xl flex items-center justify-center border border-white/10 shadow-inner">
-                <Radio className="size-7 animate-pulse" />
-              </div>
-              <div>
-                <h3 className="text-base font-black text-white tracking-tight uppercase">
-                  {t.tunnel_registry}
-                </h3>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  {t.active_tunnels}
-                </p>
-              </div>
-            </div>
-            {state.loadStates.tunnels && (
-              <Loader2 className="size-5 animate-spin text-indigo-400" />
-            )}
-          </div>
-
-          <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar-light pr-2">
-            {!state.selectedAccountId ? (
-              <div className="py-12 text-center opacity-30 flex flex-col items-center gap-3">
-                <Database className="size-10" />
-                <span className="text-[10px] font-black uppercase tracking-widest">
-                  {t.select_account}
-                </span>
-              </div>
-            ) : state.tunnels.length === 0 && !state.loadStates.tunnels ? (
-              <div className="py-12 text-center opacity-30 flex flex-col items-center gap-3">
-                <Server className="size-10" />
-                <span className="text-[10px] font-black uppercase tracking-widest">
-                  {t.tunnel_empty}
-                </span>
-              </div>
-            ) : (
-              state.tunnels.map((tunnel: any) => (
-                <div
-                  key={tunnel.id}
-                  className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all group"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-black truncate max-w-37.5">
-                      {tunnel.name}
-                    </span>
-                    <span
-                      className={`badge badge-xs border-none font-black text-[8px] uppercase px-2 py-2 ${
-                        tunnel.status === "healthy"
-                          ? "bg-emerald-500/20 text-emerald-400"
-                          : "bg-rose-500/20 text-rose-400"
-                      }`}
-                    >
-                      {tunnel.status === "healthy"
-                        ? t.tunnel_connected
-                        : t.tunnel_inactive}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-[8px] font-bold uppercase text-slate-500">
-                    <div>
-                      {t.tunnel_id}:{" "}
-                      <span className="text-slate-300 font-mono">
-                        {tunnel.id.slice(0, 8)}...
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      {t.tunnel_type}:{" "}
-                      <span className="text-slate-300">
-                        {tunnel.tunnel_type}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
           </div>
         </div>
       </div>

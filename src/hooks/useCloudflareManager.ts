@@ -8,6 +8,7 @@ export function useCloudflareManager() {
   const [activeTab, setActiveTab] = useState<
     | "auth"
     | "edge"
+    | "tunnels"
     | "utils"
     | "subnet"
     | "docs"
@@ -78,6 +79,10 @@ export function useCloudflareManager() {
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<any | null>(null);
+  const [selectedTunnelId, setSelectedTunnelId] = useState<string | null>(null);
+  const [tunnelDetails, setTunnelDetails] = useState<any | null>(null);
+  const [tunnelRoutes, setTunnelRoutes] = useState<any[]>([]);
+  const [tunnelConfig, setTunnelConfig] = useState<any | null>(null);
 
   const [propResults, setPropResults] = useState<Record<string, any>>({});
 
@@ -599,6 +604,119 @@ export function useCloudflareManager() {
         );
       } finally {
         setLoadStates((s) => ({ ...s, bulk: false }));
+      }
+    },
+    selectedTunnelId,
+    setSelectedTunnelId,
+    tunnelDetails,
+    tunnelRoutes,
+    tunnelConfig,
+    handleSelectTunnel: async (tunnelId: string) => {
+      if (!selectedAccountId) return;
+      setSelectedTunnelId(tunnelId);
+      setLoadStates((s) => ({ ...s, tunnels: true }));
+      try {
+        // Fetch Tunnel Info
+        const details = await fetchCF(
+          `accounts/${selectedAccountId}/cfd_tunnel/${tunnelId}`
+        );
+        setTunnelDetails(details);
+
+        // Fetch Routes
+        const routes = await fetchCF(
+          `accounts/${selectedAccountId}/teamnet/routes?tunnel_id=${tunnelId}`
+        );
+        setTunnelRoutes(routes || []);
+
+        // Fetch Ingress Config
+        try {
+          const config = await fetchCF(
+            `accounts/${selectedAccountId}/cfd_tunnel/${tunnelId}/configurations`
+          );
+          setTunnelConfig(config);
+        } catch (e) {
+          setTunnelConfig(null);
+        }
+
+        addLog(`Tunnel ${details.name} loaded.`, "success");
+      } catch (err: any) {
+        addLog(`Tunnel Error: ${err.message}`, "error");
+      } finally {
+        setLoadStates((s) => ({ ...s, tunnels: false }));
+      }
+    },
+    handleUpdateTunnelName: async (tunnelId: string, newName: string) => {
+      if (!selectedAccountId) return;
+      setLoadStates((s) => ({ ...s, tunnels: true }));
+      try {
+        await fetchCF(
+          `accounts/${selectedAccountId}/cfd_tunnel/${tunnelId}`,
+          "PATCH",
+          {
+            name: newName,
+          }
+        );
+        setTunnelDetails((prev: any) => ({ ...prev, name: newName }));
+        setTunnels((prev) =>
+          prev.map((t) => (t.id === tunnelId ? { ...t, name: newName } : t))
+        );
+        addLog(`Tunnel renamed to ${newName}`, "success");
+      } catch (err: any) {
+        addLog(`Rename Error: ${err.message}`, "error");
+      } finally {
+        setLoadStates((s) => ({ ...s, tunnels: false }));
+      }
+    },
+    handleAddTunnelRoute: async (network: string) => {
+      if (!selectedAccountId || !selectedTunnelId) return;
+      setLoadStates((s) => ({ ...s, tunnels: true }));
+      try {
+        await fetchCF(`accounts/${selectedAccountId}/teamnet/routes`, "POST", {
+          network,
+          tunnel_id: selectedTunnelId,
+        });
+        const routes = await fetchCF(
+          `accounts/${selectedAccountId}/teamnet/routes?tunnel_id=${selectedTunnelId}`
+        );
+        setTunnelRoutes(routes || []);
+        addLog(`Route ${network} added.`, "success");
+      } catch (err: any) {
+        addLog(`Add Route Error: ${err.message}`, "error");
+      } finally {
+        setLoadStates((s) => ({ ...s, tunnels: false }));
+      }
+    },
+    handleDeleteTunnelRoute: async (routeId: string) => {
+      if (!selectedAccountId || !selectedTunnelId) return;
+      setLoadStates((s) => ({ ...s, tunnels: true }));
+      try {
+        await fetchCF(
+          `accounts/${selectedAccountId}/teamnet/routes/${routeId}`,
+          "DELETE"
+        );
+        setTunnelRoutes((prev) => prev.filter((r) => r.id !== routeId));
+        addLog(`Route deleted.`, "success");
+      } catch (err: any) {
+        addLog(`Delete Route Error: ${err.message}`, "error");
+      } finally {
+        setLoadStates((s) => ({ ...s, tunnels: false }));
+      }
+    },
+    handleUpdateTunnelConfig: async (config: any) => {
+      if (!selectedAccountId || !selectedTunnelId) return;
+      setLoadStates((s) => ({ ...s, tunnels: true }));
+      try {
+        await fetchCF(
+          `accounts/${selectedAccountId}/cfd_tunnel/${selectedTunnelId}/configurations`,
+          "PUT",
+          config
+        );
+        setTunnelConfig(config);
+        addLog(`Tunnel configuration updated.`, "success");
+      } catch (err: any) {
+        addLog(`Config Error: ${err.message}`, "error");
+      } finally {
+        setLoadStates((s) => ({ ...s, tunnels: false }));
       }
     },
   };
