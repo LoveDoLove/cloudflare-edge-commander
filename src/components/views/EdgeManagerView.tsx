@@ -223,7 +223,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                   onChange={(e) =>
                     state.setNewDns({ ...state.newDns, type: e.target.value })
                   }
-                  className="select select-sm select-bordered bg-white font-black h-11 text-[11px] sm:col-span-1 rounded-xl focus:outline-none shadow-sm"
+                  className="select select-sm select-bordered bg-white border-slate-200 font-black h-11 text-[11px] sm:col-span-1 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none shadow-sm transition-all px-6"
                 >
                   {DNS_TYPES.map((t) => (
                     <option key={t} value={t}>
@@ -392,7 +392,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                                       type: e.target.value,
                                     })
                                   }
-                                  className="select select-xs select-bordered w-full bg-white font-bold h-9 text-[10px] rounded-lg focus:outline-none"
+                                  className="select select-xs select-bordered bg-white border-slate-200 w-full font-black h-9 text-[10px] rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all px-4"
                                 >
                                   {DNS_TYPES.map((t) => (
                                     <option key={t} value={t}>
@@ -596,7 +596,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                       <select
                         value={state.caProvider}
                         onChange={(e) => state.setCaProvider(e.target.value)}
-                        className="select select-sm bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-11 focus:ring-2 focus:ring-indigo-500/40 outline-none shadow-inner"
+                        className="select select-sm select-bordered bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-11 focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-500/50 outline-none shadow-inner transition-all px-4"
                       >
                         <option value="google">Google Trust</option>
                         <option value="lets_encrypt">Let's Encrypt</option>
@@ -639,7 +639,7 @@ export const EdgeManagerView = ({ state }: { state: any }) => {
                       <select
                         value={state.sslMode}
                         onChange={(e) => state.setSslMode(e.target.value)}
-                        className="select select-sm bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-11 focus:ring-2 focus:ring-indigo-500/40 outline-none shadow-inner"
+                        className="select select-sm select-bordered bg-slate-800 text-white border-slate-700 w-full rounded-xl font-bold h-11 focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-500/50 outline-none shadow-inner transition-all px-4"
                       >
                         <option value="off">Off (Dev Only)</option>
                         <option value="flexible">Flexible</option>
