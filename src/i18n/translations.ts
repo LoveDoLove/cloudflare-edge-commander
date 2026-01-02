@@ -125,6 +125,10 @@ export const translations = {
     delete_tunnel: "Delete Tunnel",
     tunnel_routes_empty: "No routes configured",
     tunnel_hostnames_empty: "No hostnames configured",
+    hostname_label: "Public Hostname",
+    service_label: "Service URL",
+    add_ingress: "Add Hostname Route",
+    service_hint: "e.g., http://localhost:8080",
 
     // Subnet Lab
     nav_subnet: "Subnet Lab",
@@ -268,6 +272,10 @@ export const translations = {
     delete_tunnel: "删除隧道",
     tunnel_routes_empty: "未配置路由",
     tunnel_hostnames_empty: "未配置主机名",
+    hostname_label: "公共主机名",
+    service_label: "服务地址",
+    add_ingress: "添加主机名路由",
+    service_hint: "例如: http://localhost:8080",
 
     // 子网实验室
     nav_subnet: "子网实验室",
