@@ -129,6 +129,11 @@ export const translations = {
     service_label: "Service URL",
     add_ingress: "Add Hostname Route",
     service_hint: "e.g., http://localhost:8080",
+    locally_managed: "Locally Managed Tunnel",
+    local_tunnel_desc:
+      "This tunnel uses a local configuration file. Public hostnames must be managed on the host machine or Cloudflare Dashboard.",
+    edit_on_dash: "Edit on Zero Trust Dash",
+    manage_on_dash: "Manage Hostnames on Cloudflare",
 
     // Subnet Lab
     nav_subnet: "Subnet Lab",
@@ -276,6 +281,11 @@ export const translations = {
     service_label: "服务地址",
     add_ingress: "添加主机名路由",
     service_hint: "例如: http://localhost:8080",
+    locally_managed: "本地管理隧道",
+    local_tunnel_desc:
+      "此隧道使用本地配置文件进行管理。公共主机名必须在主机或 Cloudflare 控制面板中进行管理。",
+    edit_on_dash: "在 Zero Trust 控制台进行编辑",
+    manage_on_dash: "在 Cloudflare 管理主机名",
 
     // 子网实验室
     nav_subnet: "子网实验室",

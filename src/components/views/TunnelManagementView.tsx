@@ -13,17 +13,13 @@ import {
   ChevronRight,
   Database,
   ExternalLink,
+  Lock,
 } from "lucide-react";
 
 export const TunnelManagementView = ({ state }: { state: any }) => {
   const { t } = state;
   const [newRoute, setNewRoute] = useState("");
   const [newName, setNewName] = useState("");
-  const [newHostname, setNewHostname] = useState("");
-  const [newService, setNewService] = useState("");
-  const [editingHostnameIdx, setEditingHostnameIdx] = useState<number | null>(
-    null
-  );
 
   const selectedTunnel = state.tunnelDetails;
 
@@ -284,8 +280,28 @@ export const TunnelManagementView = ({ state }: { state: any }) => {
 
                 <div className="space-y-2 flex-1 max-h-80 overflow-y-auto custom-scrollbar-light pr-1 mb-4">
                   {!state.tunnelConfig?.config?.ingress ? (
-                    <div className="py-8 text-center text-[10px] font-black uppercase text-slate-300 tracking-widest">
-                      {t.tunnel_hostnames_empty}
+                    <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
+                      <div className="size-16 bg-slate-50 text-slate-200 rounded-full flex items-center justify-center">
+                        <Lock className="size-8" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[11px] font-black text-slate-700 uppercase tracking-widest">
+                          {t.locally_managed || "Locally Managed Tunnel"}
+                        </p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight max-w-50 mx-auto">
+                          {t.local_tunnel_desc ||
+                            "This tunnel uses a local configuration file. Public hostnames must be managed on the host machine or Cloudflare Dashboard."}
+                        </p>
+                      </div>
+                      <a
+                        href={`https://one.dash.cloudflare.com/${state.selectedAccountId}/networks/connectors/cloudflare-tunnels/cfd_tunnel/${state.selectedTunnelId}/edit?tab=publicHostname`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-sm bg-indigo-600 hover:bg-indigo-700 text-white border-none rounded-xl font-black uppercase text-[9px] tracking-widest px-6 h-10 shadow-lg shadow-indigo-100"
+                      >
+                        <ExternalLink className="size-3.5 mr-2" />
+                        {t.edit_on_dash || "Edit on Zero Trust Dash"}
+                      </a>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -302,86 +318,21 @@ export const TunnelManagementView = ({ state }: { state: any }) => {
                                   <span className="text-xs font-black text-slate-800 truncate">
                                     {rule.hostname}
                                   </span>
-                                  {editingHostnameIdx === idx ? (
-                                    <div className="flex gap-2 mt-2">
-                                      <input
-                                        type="text"
-                                        value={newService}
-                                        onChange={(e) =>
-                                          setNewService(e.target.value)
-                                        }
-                                        className="input input-xs bg-white border-slate-200 flex-1 rounded-lg text-[10px] font-bold h-8 focus:ring-2 focus:ring-indigo-50"
-                                      />
-                                      <button
-                                        onClick={() => {
-                                          const ingress = [
-                                            ...state.tunnelConfig.config
-                                              .ingress,
-                                          ];
-                                          ingress[idx] = {
-                                            ...ingress[idx],
-                                            service: newService,
-                                          };
-                                          state.handleUpdateTunnelConfig({
-                                            ...state.tunnelConfig.config,
-                                            ingress,
-                                          });
-                                          setEditingHostnameIdx(null);
-                                          setNewService("");
-                                        }}
-                                        className="btn btn-xs btn-indigo-600 bg-indigo-600 text-white border-none rounded-lg h-8 px-3"
-                                      >
-                                        {t.save_changes}
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          setEditingHostnameIdx(null);
-                                          setNewService("");
-                                        }}
-                                        className="btn btn-xs btn-ghost text-slate-400 rounded-lg h-8 px-2"
-                                      >
-                                        {t.cancel}
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                                        {rule.service}
-                                      </span>
-                                    </div>
-                                  )}
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                                      {rule.service}
+                                    </span>
+                                  </div>
                                 </div>
                                 <div className="flex gap-1 ml-4 self-start">
-                                  {editingHostnameIdx !== idx && (
-                                    <>
-                                      <button
-                                        onClick={() => {
-                                          setEditingHostnameIdx(idx);
-                                          setNewService(rule.service);
-                                        }}
-                                        className="p-2 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-xl transition-all"
-                                      >
-                                        <Save className="size-4" />
-                                      </button>
-                                      <a
-                                        href={`https://${rule.hostname}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="p-2 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-xl transition-all"
-                                      >
-                                        <ExternalLink className="size-4" />
-                                      </a>
-                                      <button
-                                        onClick={() =>
-                                          state.handleDeleteHostname(idx)
-                                        }
-                                        disabled={state.loadStates.tunnels}
-                                        className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-                                      >
-                                        <Trash2 className="size-4" />
-                                      </button>
-                                    </>
-                                  )}
+                                  <a
+                                    href={`https://one.dash.cloudflare.com/${state.selectedAccountId}/networks/connectors/cloudflare-tunnels/cfd_tunnel/${state.selectedTunnelId}/edit?tab=publicHostname`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-2 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-xl transition-all"
+                                  >
+                                    <ExternalLink className="size-4" />
+                                  </a>
                                 </div>
                               </div>
                             </div>
@@ -392,51 +343,16 @@ export const TunnelManagementView = ({ state }: { state: any }) => {
                   )}
                 </div>
 
-                <div className="mt-auto pt-6 border-t border-slate-50 space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="form-control">
-                      <label className="label py-1">
-                        <span className="label-text text-slate-400 text-[9px] font-black uppercase tracking-widest">
-                          {t.hostname_label}
-                        </span>
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="app.example.com"
-                        value={newHostname}
-                        onChange={(e) => setNewHostname(e.target.value)}
-                        className="input bg-slate-50 border-slate-200 rounded-xl text-xs font-bold h-10 focus:ring-4 focus:ring-indigo-50 shadow-sm"
-                      />
-                    </div>
-                    <div className="form-control">
-                      <label className="label py-1">
-                        <span className="label-text text-slate-400 text-[9px] font-black uppercase tracking-widest">
-                          {t.service_label}
-                        </span>
-                      </label>
-                      <input
-                        type="text"
-                        placeholder={t.service_hint}
-                        value={newService}
-                        onChange={(e) => setNewService(e.target.value)}
-                        className="input bg-slate-50 border-slate-200 rounded-xl text-xs font-bold h-10 focus:ring-4 focus:ring-indigo-50 shadow-sm"
-                      />
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      state.handleAddHostname(newHostname, newService);
-                      setNewHostname("");
-                      setNewService("");
-                    }}
-                    disabled={
-                      !newHostname || !newService || state.loadStates.tunnels
-                    }
-                    className="w-full btn btn-sm h-11 bg-slate-900 hover:bg-indigo-600 border-none text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-200/50 transition-all active:scale-[0.98]"
+                <div className="mt-auto pt-6 border-t border-slate-50">
+                  <a
+                    href={`https://one.dash.cloudflare.com/${state.selectedAccountId}/networks/connectors/cloudflare-tunnels/cfd_tunnel/${state.selectedTunnelId}/edit?tab=publicHostname`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full btn btn-sm h-11 bg-slate-900 hover:bg-indigo-600 border-none text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-200/50 transition-all active:scale-[0.98] flex items-center justify-center"
                   >
                     <Plus className="size-4 mr-2" />
-                    {t.add_ingress}
-                  </button>
+                    {t.manage_on_dash || "Manage Hostnames on Cloudflare"}
+                  </a>
                 </div>
               </div>
             </div>

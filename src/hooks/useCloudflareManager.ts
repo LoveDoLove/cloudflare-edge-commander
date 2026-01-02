@@ -633,16 +633,16 @@ export function useCloudflareManager() {
     }
   };
 
-  const handleUpdateTunnelConfig = async (config: any) => {
+  const handleUpdateTunnelConfig = async (configPayload: any) => {
     if (!selectedAccountId || !selectedTunnelId) return;
     setLoadStates((s) => ({ ...s, tunnels: true }));
     try {
       await fetchCF(
         `accounts/${selectedAccountId}/cfd_tunnel/${selectedTunnelId}/configurations`,
         "PUT",
-        config
+        { config: configPayload }
       );
-      setTunnelConfig({ config });
+      setTunnelConfig({ config: configPayload });
       addLog(`Tunnel configuration updated.`, "success");
     } catch (err: any) {
       addLog(`Config Error: ${err.message}`, "error");
@@ -676,6 +676,22 @@ export function useCloudflareManager() {
   };
 
   return {
+    // Tunnel Management (Critical)
+    handleAddHostname,
+    handleDeleteHostname,
+    handleSelectTunnel,
+    handleUpdateTunnelName,
+    handleAddTunnelRoute,
+    handleDeleteTunnelRoute,
+    handleUpdateTunnelConfig,
+    tunnels,
+    selectedTunnelId,
+    setSelectedTunnelId,
+    tunnelDetails,
+    tunnelRoutes,
+    tunnelConfig,
+
+    // Core State & UI
     lang,
     setLang,
     t,
@@ -743,19 +759,6 @@ export function useCloudflareManager() {
     handleImportDns,
     checkPropagation,
     propResults,
-    tunnels,
     handleNuclearBtn,
-    selectedTunnelId,
-    setSelectedTunnelId,
-    tunnelDetails,
-    tunnelRoutes,
-    tunnelConfig,
-    handleSelectTunnel,
-    handleUpdateTunnelName,
-    handleAddTunnelRoute,
-    handleDeleteTunnelRoute,
-    handleUpdateTunnelConfig,
-    handleAddHostname,
-    handleDeleteHostname,
   };
 }
