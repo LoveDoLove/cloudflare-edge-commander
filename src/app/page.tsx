@@ -15,11 +15,13 @@ import {
   Menu,
   X,
   Calculator,
+  Radio,
 } from "lucide-react";
 
 import { useCloudflareManager } from "@/hooks/useCloudflareManager";
 import { ConnectivityView } from "@/components/views/ConnectivityView";
 import { EdgeManagerView } from "@/components/views/EdgeManagerView";
+import { TunnelManagementView } from "@/components/views/TunnelManagementView";
 import { NetworkLabView } from "@/components/views/NetworkLabView";
 import { SubnetLabView } from "@/components/views/SubnetLabView";
 import { DnsDocsView } from "@/components/views/DnsDocsView";
@@ -135,6 +137,7 @@ export default function App() {
           {[
             { id: "auth", label: t.nav_conn, icon: LayoutDashboard },
             { id: "edge", label: t.nav_edge, icon: CloudCog },
+            { id: "tunnels", label: t.nav_tunnels, icon: Radio },
             { id: "utils", label: t.nav_lab, icon: Network },
             { id: "subnet", label: t.nav_subnet, icon: Calculator },
             { id: "docs", label: t.nav_docs, icon: BookOpen },
@@ -266,6 +269,7 @@ export default function App() {
             <h2 className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-slate-400 truncate">
               {state.activeTab === "auth" && t.auth_title}
               {state.activeTab === "edge" && t.infra_title}
+              {state.activeTab === "tunnels" && t.tunnels_title}
               {state.activeTab === "utils" && t.lab_title}
               {state.activeTab === "subnet" && t.subnet_title}
               {state.activeTab === "docs" && t.docs_title}
@@ -293,6 +297,9 @@ export default function App() {
           <div className="max-w-6xl mx-auto transition-all duration-500">
             {state.activeTab === "auth" && <ConnectivityView state={state} />}
             {state.activeTab === "edge" && <EdgeManagerView state={state} />}
+            {state.activeTab === "tunnels" && (
+              <TunnelManagementView state={state} />
+            )}
             {state.activeTab === "utils" && (
               <NetworkLabView state={state} utils={utils} />
             )}

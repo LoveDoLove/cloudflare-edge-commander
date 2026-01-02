@@ -8,6 +8,7 @@ export function useCloudflareManager() {
   const [activeTab, setActiveTab] = useState<
     | "auth"
     | "edge"
+    | "tunnels"
     | "utils"
     | "subnet"
     | "docs"
@@ -78,6 +79,10 @@ export function useCloudflareManager() {
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<any | null>(null);
+  const [selectedTunnelId, setSelectedTunnelId] = useState<string | null>(null);
+  const [tunnelDetails, setTunnelDetails] = useState<any | null>(null);
+  const [tunnelRoutes, setTunnelRoutes] = useState<any[]>([]);
+  const [tunnelConfig, setTunnelConfig] = useState<any | null>(null);
 
   const [propResults, setPropResults] = useState<Record<string, any>>({});
 
@@ -461,7 +466,232 @@ export function useCloudflareManager() {
     }
   };
 
+  const toggleSelectDns = (id: string) =>
+    setSelectedDnsIds((prev) => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+
+  const toggleSelectAllDns = (recs: any[]) =>
+    setSelectedDnsIds((prev) =>
+      prev.size === recs.length ? new Set() : new Set(recs.map((r) => r.id))
+    );
+
+  const handleBulkDelete = async () => {
+    setLoadStates((s) => ({ ...s, bulk: true }));
+    for (const id of Array.from(selectedDnsIds)) {
+      try {
+        await fetchCF(`zones/${zoneId}/dns_records/${id}`, "DELETE");
+      } catch {}
+    }
+    const records = await fetchCF(`zones/${zoneId}/dns_records`);
+    setDnsRecords(records);
+    setSelectedDnsIds(new Set());
+    setShowBulkDeleteConfirm(false);
+    setLoadStates((s) => ({ ...s, bulk: false }));
+  };
+
+  const handleBulkProxy = async (p: boolean) => {
+    setLoadStates((s) => ({ ...s, bulk: true }));
+    for (const id of Array.from(selectedDnsIds)) {
+      try {
+        await fetchCF(`zones/${zoneId}/dns_records/${id}`, "PATCH", {
+          proxied: p,
+        });
+      } catch {}
+    }
+    const records = await fetchCF(`zones/${zoneId}/dns_records`);
+    setDnsRecords(records);
+    setSelectedDnsIds(new Set());
+    setLoadStates((s) => ({ ...s, bulk: false }));
+  };
+
+  const handleNuclearBtn = async () => {
+    if (!zoneId) return;
+    const isUnderAttack = securityLevel === "under_attack";
+    const targetLevel = isUnderAttack ? "medium" : "under_attack";
+    const actionLabel = isUnderAttack ? "DISABLE" : "ENABLE";
+
+    if (
+      !window.confirm(
+        t.nuclear_confirm ||
+          `PROTOCOL OVERRIDE: ${actionLabel} Under Attack mode for ${selectedZoneName}?`
+      )
+    )
+      return;
+
+    setLoadStates((s) => ({ ...s, bulk: true }));
+    addLog(
+      `SECURITY PROTOCOL: Setting ${selectedZoneName} to ${targetLevel}...`,
+      isUnderAttack ? "info" : "error"
+    );
+
+    try {
+      await fetchCF(`zones/${zoneId}/settings/security_level`, "PATCH", {
+        value: targetLevel,
+      });
+      setSecurityLevel(targetLevel);
+      addLog(
+        `SECURITY PROTOCOL: ${selectedZoneName} is now ${targetLevel}.`,
+        "success"
+      );
+    } catch (e: any) {
+      addLog(
+        `Security Protocol Error for ${selectedZoneName}: ${e.message}`,
+        "error"
+      );
+    } finally {
+      setLoadStates((s) => ({ ...s, bulk: false }));
+    }
+  };
+
+  const handleSelectTunnel = async (tunnelId: string) => {
+    if (!selectedAccountId) return;
+    setSelectedTunnelId(tunnelId);
+    setLoadStates((s) => ({ ...s, tunnels: true }));
+    try {
+      const details = await fetchCF(
+        `accounts/${selectedAccountId}/cfd_tunnel/${tunnelId}`
+      );
+      setTunnelDetails(details);
+      const routes = await fetchCF(
+        `accounts/${selectedAccountId}/teamnet/routes?tunnel_id=${tunnelId}`
+      );
+      setTunnelRoutes(routes || []);
+      try {
+        const config = await fetchCF(
+          `accounts/${selectedAccountId}/cfd_tunnel/${tunnelId}/configurations`
+        );
+        setTunnelConfig(config);
+      } catch (e) {
+        setTunnelConfig(null);
+      }
+      addLog(`Tunnel ${details.name} loaded.`, "success");
+    } catch (err: any) {
+      addLog(`Tunnel Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, tunnels: false }));
+    }
+  };
+
+  const handleUpdateTunnelName = async (tunnelId: string, newName: string) => {
+    if (!selectedAccountId) return;
+    setLoadStates((s) => ({ ...s, tunnels: true }));
+    try {
+      await fetchCF(
+        `accounts/${selectedAccountId}/cfd_tunnel/${tunnelId}`,
+        "PATCH",
+        { name: newName }
+      );
+      setTunnelDetails((prev: any) => ({ ...prev, name: newName }));
+      setTunnels((prev) =>
+        prev.map((t) => (t.id === tunnelId ? { ...t, name: newName } : t))
+      );
+      addLog(`Tunnel renamed to ${newName}`, "success");
+    } catch (err: any) {
+      addLog(`Rename Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, tunnels: false }));
+    }
+  };
+
+  const handleAddTunnelRoute = async (network: string) => {
+    if (!selectedAccountId || !selectedTunnelId) return;
+    setLoadStates((s) => ({ ...s, tunnels: true }));
+    try {
+      await fetchCF(`accounts/${selectedAccountId}/teamnet/routes`, "POST", {
+        network,
+        tunnel_id: selectedTunnelId,
+      });
+      const routes = await fetchCF(
+        `accounts/${selectedAccountId}/teamnet/routes?tunnel_id=${selectedTunnelId}`
+      );
+      setTunnelRoutes(routes || []);
+      addLog(`Route ${network} added.`, "success");
+    } catch (err: any) {
+      addLog(`Add Route Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, tunnels: false }));
+    }
+  };
+
+  const handleDeleteTunnelRoute = async (routeId: string) => {
+    if (!selectedAccountId || !selectedTunnelId) return;
+    setLoadStates((s) => ({ ...s, tunnels: true }));
+    try {
+      await fetchCF(
+        `accounts/${selectedAccountId}/teamnet/routes/${routeId}`,
+        "DELETE"
+      );
+      setTunnelRoutes((prev) => prev.filter((r) => r.id !== routeId));
+      addLog(`Route deleted.`, "success");
+    } catch (err: any) {
+      addLog(`Delete Route Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, tunnels: false }));
+    }
+  };
+
+  const handleUpdateTunnelConfig = async (configPayload: any) => {
+    if (!selectedAccountId || !selectedTunnelId) return;
+    setLoadStates((s) => ({ ...s, tunnels: true }));
+    try {
+      await fetchCF(
+        `accounts/${selectedAccountId}/cfd_tunnel/${selectedTunnelId}/configurations`,
+        "PUT",
+        { config: configPayload }
+      );
+      setTunnelConfig({ config: configPayload });
+      addLog(`Tunnel configuration updated.`, "success");
+    } catch (err: any) {
+      addLog(`Config Error: ${err.message}`, "error");
+    } finally {
+      setLoadStates((s) => ({ ...s, tunnels: false }));
+    }
+  };
+
+  const handleAddHostname = async (hostname: string, service: string) => {
+    if (!selectedAccountId || !selectedTunnelId || !tunnelConfig) return;
+    const currentConfig = tunnelConfig.config || { ingress: [] };
+    const ingress = [...(currentConfig.ingress || [])];
+    const catchAllIdx = ingress.findIndex((r: any) => !r.hostname);
+    const newRule = { hostname, service };
+    if (catchAllIdx !== -1) {
+      ingress.splice(catchAllIdx, 0, newRule);
+    } else {
+      ingress.push(newRule);
+      ingress.push({ service: "http_status:404" });
+    }
+    await handleUpdateTunnelConfig({ ...currentConfig, ingress });
+  };
+
+  const handleDeleteHostname = async (index: number) => {
+    if (!selectedAccountId || !selectedTunnelId || !tunnelConfig) return;
+    const currentConfig = tunnelConfig.config;
+    const ingress = currentConfig.ingress.filter(
+      (_: any, i: number) => i !== index
+    );
+    await handleUpdateTunnelConfig({ ...currentConfig, ingress });
+  };
+
   return {
+    // Tunnel Management (Critical)
+    handleAddHostname,
+    handleDeleteHostname,
+    handleSelectTunnel,
+    handleUpdateTunnelName,
+    handleAddTunnelRoute,
+    handleDeleteTunnelRoute,
+    handleUpdateTunnelConfig,
+    tunnels,
+    selectedTunnelId,
+    setSelectedTunnelId,
+    tunnelDetails,
+    tunnelRoutes,
+    tunnelConfig,
+
+    // Core State & UI
     lang,
     setLang,
     t,
@@ -519,87 +749,16 @@ export function useCloudflareManager() {
     searchTerm,
     setSearchTerm,
     selectedDnsIds,
-    toggleSelectDns: (id: string) =>
-      setSelectedDnsIds((prev) => {
-        const n = new Set(prev);
-        n.has(id) ? n.delete(id) : n.add(id);
-        return n;
-      }),
-    toggleSelectAllDns: (recs: any[]) =>
-      setSelectedDnsIds((prev) =>
-        prev.size === recs.length ? new Set() : new Set(recs.map((r) => r.id))
-      ),
-    handleBulkDelete: async () => {
-      setLoadStates((s) => ({ ...s, bulk: true }));
-      for (const id of Array.from(selectedDnsIds)) {
-        try {
-          await fetchCF(`zones/${zoneId}/dns_records/${id}`, "DELETE");
-        } catch {}
-      }
-      const records = await fetchCF(`zones/${zoneId}/dns_records`);
-      setDnsRecords(records);
-      setSelectedDnsIds(new Set());
-      setShowBulkDeleteConfirm(false);
-      setLoadStates((s) => ({ ...s, bulk: false }));
-    },
-    handleBulkProxy: async (p: boolean) => {
-      setLoadStates((s) => ({ ...s, bulk: true }));
-      for (const id of Array.from(selectedDnsIds)) {
-        try {
-          await fetchCF(`zones/${zoneId}/dns_records/${id}`, "PATCH", {
-            proxied: p,
-          });
-        } catch {}
-      }
-      const records = await fetchCF(`zones/${zoneId}/dns_records`);
-      setDnsRecords(records);
-      setSelectedDnsIds(new Set());
-      setLoadStates((s) => ({ ...s, bulk: false }));
-    },
+    toggleSelectDns,
+    toggleSelectAllDns,
+    handleBulkDelete,
+    handleBulkProxy,
     showBulkDeleteConfirm,
     setShowBulkDeleteConfirm,
     handleExportDns,
     handleImportDns,
     checkPropagation,
     propResults,
-    tunnels,
-    handleNuclearBtn: async () => {
-      if (!zoneId) return;
-      const isUnderAttack = securityLevel === "under_attack";
-      const targetLevel = isUnderAttack ? "medium" : "under_attack";
-      const actionLabel = isUnderAttack ? "DISABLE" : "ENABLE";
-
-      if (
-        !window.confirm(
-          t.nuclear_confirm ||
-            `PROTOCOL OVERRIDE: ${actionLabel} Under Attack mode for ${selectedZoneName}?`
-        )
-      )
-        return;
-
-      setLoadStates((s) => ({ ...s, bulk: true }));
-      addLog(
-        `SECURITY PROTOCOL: Setting ${selectedZoneName} to ${targetLevel}...`,
-        isUnderAttack ? "info" : "error"
-      );
-
-      try {
-        await fetchCF(`zones/${zoneId}/settings/security_level`, "PATCH", {
-          value: targetLevel,
-        });
-        setSecurityLevel(targetLevel);
-        addLog(
-          `SECURITY PROTOCOL: ${selectedZoneName} is now ${targetLevel}.`,
-          "success"
-        );
-      } catch (e: any) {
-        addLog(
-          `Security Protocol Error for ${selectedZoneName}: ${e.message}`,
-          "error"
-        );
-      } finally {
-        setLoadStates((s) => ({ ...s, bulk: false }));
-      }
-    },
+    handleNuclearBtn,
   };
 }
